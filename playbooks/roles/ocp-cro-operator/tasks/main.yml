@@ -1,0 +1,266 @@
+---
+# test
+- name: Clean up resources
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operator.autoscaling.openshift.io/v1
+      kind: ClusterResourceOverride
+      metadata:
+        name: cluster
+      state: absent
+
+- name: Delete Subscription
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operators.coreos.com/v1alpha1
+      kind: Subscription
+      metadata:
+        name: clusterresourceoverride
+        namespace: clusterresourceoverride-operator
+      state: absent
+
+- name: Delete OperatorGroup
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operators.coreos.com/v1
+      kind: OperatorGroup
+      metadata:
+        generateName: clusterresourceoverride-
+        name: clusterresourceoverride-operator
+        namespace: clusterresourceoverride-operator
+      state: absent
+
+- name: Delete Namespace
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: clusterresourceoverride-operator
+      state: absent
+
+- name: Remove cloned repository
+  file:
+    path: /root/cluster-resource-override-admission-operator
+    state: absent
+
+- name: Delete authfile
+  file:
+    path: authfile
+    state: absent
+
+- name: Read podman password from file
+  set_fact:
+    podman_password: "{{ lookup('file', 'podman_pass') }}"
+
+- name: Set OperatorHub disableAllDefaultSources is to true
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: config.openshift.io/v1
+      kind: OperatorHub
+      metadata:
+        name: cluster
+      spec:
+        disableAllDefaultSources: true
+    state: merged
+  register: output
+
+- name: "Fail if unable to patch the disableAllDefaultSources: true" 
+  fail:
+    msg: "Unable to set disableAllDefaultSources to true : {{  output.stderr }}"
+  when: output.failed  
+
+- name: Get pull secret and decode
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: openshift-config
+    name: pull-secret
+  register: pull_secret_result
+
+- name: Save decoded pull secret to file
+  copy:
+    content: "{{ pull_secret_result.data.dockerconfigjson | b64decode }}"
+    dest: authfile
+
+#--------------------needed to test this task before integrating into main branch--
+#- name: Log in to podman
+#  community.general.podman_login:
+#    authfile: ./authfile
+#    username: "|shared-qe-temp.src5.75b4d5"
+#    password: "{{ podman_password }}"
+#---------------------------------
+
+# Podman login
+- name: Podman Login
+  shell: |
+    podman login --authfile ./authfile --username "|shared-qe-temp.src5.75b4d5" --password {{ podman_password }}
+  register: output
+  ignore_errors: yes
+
+- name: Set data for secret/pull-secret
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: pull-secret
+        namespace: openshift-config
+      data:
+        .dockerconfigjson: "{{ lookup('file', 'authfile') | b64encode }}"
+    state: present
+
+- name: Create ImageContentSourcePolicy
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operator.openshift.io/v1alpha1
+      kind: ImageContentSourcePolicy
+      metadata:
+        name: brew-registry
+      spec:
+        repositoryDigestMirrors:
+          - mirrors:
+              - brew.registry.redhat.io
+            source: registry.redhat.io
+          - mirrors:
+              - brew.registry.redhat.io
+            source: registry.stage.redhat.io
+          - mirrors:
+              - brew.registry.redhat.io
+            source: registry-proxy.engineering.redhat.com
+    state: present
+
+- name: Create CatalogSource
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operators.coreos.com/v1alpha1
+      kind: CatalogSource
+      metadata:
+        name: redhat-operators-stage
+        namespace: openshift-marketplace
+      spec:
+        sourceType: grpc
+        publisher: redhat
+        displayName: "Red Hat Operators v{{ ocp_version }} Stage"
+        image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ ocp_version }}"
+    state: present
+
+- name: Create Namespace
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/warn: privileged
+          security.openshift.io/scc.podSecurityLabelSync: "false"
+          kubernetes.io/metadata.name: clusterresourceoverride-operator
+        name: clusterresourceoverride-operator
+      name: clusterresourceoverride-operator
+    spec:
+      finalizers:
+        - kubernetes
+  state: present
+
+- name: Create OperatorGroup
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operators.coreos.com/v1
+      kind: OperatorGroup
+      metadata:
+        generateName: clusterresourceoverride-
+        name: clusterresourceoverride-operator
+        namespace: clusterresourceoverride-operator
+      spec:
+        targetNamespaces:
+          - clusterresourceoverride-operator
+    state: present
+
+- name: Create Subscription
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operators.coreos.com/v1alpha1
+      kind: Subscription
+      metadata:
+        name: clusterresourceoverride
+        namespace: clusterresourceoverride-operator
+      spec:
+        channel: stable
+        installPlanApproval: Automatic
+        name: clusterresourceoverride
+        source: redhat-operators-stage
+        sourceNamespace: openshift-marketplace
+    state: present
+
+- name: Wait for Operator pod to be ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: clusterresourceoverride-operator
+  register: operator_pod_info
+  until: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
+  retries: 10
+  delay: 60
+
+- name: Check if Operator pod is ready
+  debug:
+    msg: "Operator pod is up and running"
+  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
+
+- name: Check if Operator pod is not ready after 10 mins
+  fail:
+    msg: "Operator pod not up after 10 mins"
+  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 0
+
+- name: Create ClusterResourceOverride
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: operator.autoscaling.openshift.io/v1
+      kind: ClusterResourceOverride
+      metadata:
+        name: cluster
+      spec:
+        podResourceOverride:
+          spec:
+            memoryRequestToLimitPercent: 50
+            cpuRequestToLimitPercent: 25
+            limitCPUToMemoryPercent: 200
+    state: present
+
+- name: Clone cluster-resource-override-admission-operator repository
+  git:
+    repo: https://github.com/openshift/cluster-resource-override-admission-operator.git
+    dest: /root/cluster-resource-override-admission-operator
+
+- name: Download Go
+  get_url:
+    url: "https://go.dev/dl/go{{ go_version }}.linux-ppc64le.tar.gz"
+    dest: "/usr/local/go{{ go_version }}.linux-ppc64le.tar.gz"
+
+- name: Extract Go
+  unarchive:
+    src: "/usr/local/go{{ go_version }}.linux-ppc64le.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+    creates: /usr/local/go{{ go_version }}
+
+- name: Set Go environment variables
+  set_fact:
+    gopath: /usr/local/go{{ go_version }}
+    path: "{{ path }}:{{ gopath }}/bin"
+  vars:
+    path: "{{ lookup('env', 'PATH') | default('') }}"
+
+- name: Change directory to cluster-resource-override-admission-operator
+  command: cd /root/cluster-resource-override-admission-operator
+
+- name: Build cluster-resource-override-admission-operator
+  command: make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig
+  args:
+    chdir: /root/cluster-resource-override-admission-operator
+
+- name: Output the result
+  debug:
+    msg: "cluster-resource-override-admission-operator has been built successful"
