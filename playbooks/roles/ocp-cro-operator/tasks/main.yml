@@ -31,9 +31,13 @@
     name: pull-secret
   register: pull_secret_result
 
+- name: Read podman password from file
+  set_fact:
+    data_pull: "{{ pull_secret_result.resources }}"
+
 - name: Save decoded pull secret to file
   copy:
-    content: "{{ pull_secret_result | b64decode }}"
+    content: "{{ data_pull.data | b64decode }}"
     dest: authfile
 
 #--------------------needed to test this task before integrating into main branch--
