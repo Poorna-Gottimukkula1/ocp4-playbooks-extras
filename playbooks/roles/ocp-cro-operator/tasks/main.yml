@@ -1,7 +1,7 @@
 ---
 # test
 - name: Clean up resources
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operator.autoscaling.openshift.io/v1
       kind: ClusterResourceOverride
@@ -10,7 +10,7 @@
       state: absent
 
 - name: Delete Subscription
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operators.coreos.com/v1alpha1
       kind: Subscription
@@ -20,7 +20,7 @@
       state: absent
 
 - name: Delete OperatorGroup
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operators.coreos.com/v1
       kind: OperatorGroup
@@ -31,7 +31,7 @@
       state: absent
 
 - name: Delete Namespace
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: v1
       kind: Namespace
@@ -54,7 +54,7 @@
     podman_password: "{{ lookup('file', 'podman_pass') }}"
 
 - name: Set OperatorHub disableAllDefaultSources is to true
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: config.openshift.io/v1
       kind: OperatorHub
@@ -71,7 +71,7 @@
   when: output.failed  
 
 - name: Get pull secret and decode
-  kubernetes.core.k8s_info:
+  k8s_info:
     api_version: v1
     kind: Secret
     namespace: openshift-config
@@ -99,7 +99,7 @@
   ignore_errors: yes
 
 - name: Set data for secret/pull-secret
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -111,7 +111,7 @@
     state: present
 
 - name: Create ImageContentSourcePolicy
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operator.openshift.io/v1alpha1
       kind: ImageContentSourcePolicy
@@ -131,7 +131,7 @@
     state: present
 
 - name: Create CatalogSource
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operators.coreos.com/v1alpha1
       kind: CatalogSource
@@ -146,7 +146,7 @@
     state: present
 
 - name: Create Namespace
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: v1
       kind: Namespace
@@ -165,7 +165,7 @@
     state: present
 
 - name: Create OperatorGroup
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operators.coreos.com/v1
       kind: OperatorGroup
@@ -179,7 +179,7 @@
     state: present
 
 - name: Create Subscription
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operators.coreos.com/v1alpha1
       kind: Subscription
@@ -195,7 +195,7 @@
     state: present
 
 - name: Wait for Operator pod to be ready
-  kubernetes.core.k8s_info:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: clusterresourceoverride-operator
@@ -215,7 +215,7 @@
   when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 0
 
 - name: Create ClusterResourceOverride
-  kubernetes.core.k8s:
+  k8s:
     definition:
       apiVersion: operator.autoscaling.openshift.io/v1
       kind: ClusterResourceOverride
