@@ -162,7 +162,7 @@
     spec:
       finalizers:
         - kubernetes
-  state: present
+    state: present
 
 - name: Create OperatorGroup
   kubernetes.core.k8s:
