@@ -160,8 +160,8 @@
       namespace: clusterresourceoverride-operator
     register: pod
     until: ( pod.resources | length == 1) and ( pod.resources[0].status.containerStatuses is defined )
-    retries: 2
-    delay: 20
+    retries: 5
+    delay: 30
   rescue:
     - name: "Failure"
       fail:
