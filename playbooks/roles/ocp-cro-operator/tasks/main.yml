@@ -1,57 +1,9 @@
 ---
 # test
-- name: Clean up resources
-  k8s:
-    definition:
-      apiVersion: operator.autoscaling.openshift.io/v1
-      kind: ClusterResourceOverride
-      metadata:
-        name: cluster
-    state: absent
-
-- name: Delete Subscription
-  k8s:
-    definition:
-      apiVersion: operators.coreos.com/v1alpha1
-      kind: Subscription
-      metadata:
-        name: clusterresourceoverride
-        namespace: clusterresourceoverride-operator
-    state: absent
-
-- name: Delete OperatorGroup
-  k8s:
-    definition:
-      apiVersion: operators.coreos.com/v1
-      kind: OperatorGroup
-      metadata:
-        generateName: clusterresourceoverride-
-        name: clusterresourceoverride-operator
-        namespace: clusterresourceoverride-operator
-    state: absent
-
-- name: Delete Namespace
-  k8s:
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: clusterresourceoverride-operator
-    state: absent
-
-- name: Remove cloned repository
-  file:
-    path: /root/cluster-resource-override-admission-operator
-    state: absent
-
-- name: Delete authfile
-  file:
-    path: authfile
-    state: absent
-
 - name: Read podman password from file
   set_fact:
-    podman_password: "{{ lookup('file', 'podman_pass') }}"
+    podman_password1: "{{ lookup('file', 'podman_pass') }}"
+    podman_password: "test"
 
 - name: Set OperatorHub disableAllDefaultSources is to true
   k8s:
