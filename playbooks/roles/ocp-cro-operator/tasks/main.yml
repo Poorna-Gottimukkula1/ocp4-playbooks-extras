@@ -117,9 +117,9 @@
           kubernetes.io/metadata.name: clusterresourceoverride-operator
         name: clusterresourceoverride-operator
       name: clusterresourceoverride-operator
-    spec:
-      finalizers:
-        - kubernetes
+      spec:
+        finalizers:
+          - kubernetes
     state: present
 
 - name: Create OperatorGroup
