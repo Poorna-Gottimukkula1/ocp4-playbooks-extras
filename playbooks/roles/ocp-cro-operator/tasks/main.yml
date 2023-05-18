@@ -5,9 +5,58 @@
     podman_password: "{{ ansible_env.HOME }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
 
-
+- block:
+    # Delete CRO subscription
+    - name: "Delete CRO subscription"
+      kubernetes.core.k8s:
+        kind: "Subscription"
+        namespace: "clusterresourceoverride-operator"
+        name: "clusterresourceoverride-operator"
+        api_version: '*'
+        state: absent
+    # Delete ImageContentSourcePolicy
+    - name: "Delete ImageContentSourcePolicy"
+      kubernetes.core.k8s:
+        kind: "ImageContentSourcePolicy"
+        name: "brew-registry"
+        apiVersion: operator.openshift.io/v1alpha1
+        state: absent
+    # Delete Redhat Operator CatalogSource 
+    - name: "Delete Redhat Operator CatalogSource"
+      kubernetes.core.k8s: 
+        apiVersion: operators.coreos.com/v1alpha1
+        kind: CatalogSource
+        name: redhat-operators-stage
+        namespace: openshift-marketplace  
+        state: absent
+    # Delete the Namespace
+    - name: "Delete the Namespace"
+      kubernetes.core.k8s: 
+        apiVersion: v1
+        kind: Namespace
+        name: clusterresourceoverride-operator
+        state: absent
+    # Delete the Operator Group
+    - name: "Delete the Operator Group"
+      kubernetes.core.k8s:
+        apiVersion: operators.coreos.com/v1
+        kind: OperatorGroup
+        name: clusterresourceoverride-operator 
+        state: absent 
+    # Delete the CRO limits
+    - name: "Delete the CRO limits"
+      kubernetes.core.k8s:
+        apiVersion: operator.autoscaling.openshift.io/v1
+        kind: ClusterResourceOverride
+        name: cluster
+        state: absent      
+  rescue:
+    - name: "Failure"
+      fail:
+        msg: "failed to delete the resources"  
+    
 - name: Set OperatorHub disableAllDefaultSources is to true
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: config.openshift.io/v1
       kind: OperatorHub
@@ -24,7 +73,7 @@
   when: output.failed  
 
 - name: Get pull secret and decode
-  k8s_info:
+  kubernetes.core.k8s_info:
     api_version: v1
     kind: Secret
     namespace: openshift-config
@@ -57,7 +106,7 @@
   ignore_errors: yes
 
 - name: Set data for secret/pull-secret
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -69,7 +118,7 @@
     state: present
 
 - name: Create ImageContentSourcePolicy
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: operator.openshift.io/v1alpha1
       kind: ImageContentSourcePolicy
@@ -89,7 +138,7 @@
     state: present
 
 - name: Create CatalogSource
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: operators.coreos.com/v1alpha1
       kind: CatalogSource
@@ -104,7 +153,7 @@
     state: present
 
 - name: Create Namespace
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Namespace
@@ -123,7 +172,7 @@
     state: present
 
 - name: Create OperatorGroup
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: operators.coreos.com/v1
       kind: OperatorGroup
@@ -137,7 +186,7 @@
     state: present
 
 - name: Create Subscription
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: operators.coreos.com/v1alpha1
       kind: Subscription
@@ -154,7 +203,7 @@
 
 - block:
   - name: Wait for Operator pod to be ready
-    k8s_info:
+    kubernetes.core.k8s_info:
       api_version: v1
       kind: Pod
       namespace: clusterresourceoverride-operator
@@ -178,7 +227,7 @@
 #  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 0
 
 - name: Create ClusterResourceOverride
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: operator.autoscaling.openshift.io/v1
       kind: ClusterResourceOverride
@@ -209,7 +258,7 @@
     remote_src: yes
     creates: /usr/local/go
 
-- name: Build cluster-resource-override-admission-operator
+- name: Build cluster resource override admission operator
   shell: |
       set -e    
       export GOPATH=/usr/local/go
