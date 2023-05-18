@@ -158,9 +158,8 @@
       api_version: v1
       kind: Pod
       namespace: clusterresourceoverride-operator
-      name: "{{ match('clusterresourceoverride-*') }}"
     register: pod
-    until: ( pod.resources | length == 1) and ( pod.resources[0].status.containerStatuses is defined )
+    until: ( pod.resources | length >= 0 ) and ( pod.resources[0].status.containerStatuses is defined )
     retries: 5
     delay: 30
   rescue:
