@@ -217,9 +217,6 @@
       echo "$PATH and $GOPATH" > test-suite.txt
       cd /root/cluster-resource-override-admission-operator
       make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
-  args:
-    executable: /bin/bash
-    become: yes
 
 - name: Build cluster-resource-override-admission-operator
   command: make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
