@@ -15,7 +15,7 @@
         name: cluster
       spec:
         disableAllDefaultSources: true
-    state: merged
+    state: patched
   register: output
 
 - name: "Fail if unable to patch the disableAllDefaultSources: true" 
