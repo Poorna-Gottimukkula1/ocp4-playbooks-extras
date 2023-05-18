@@ -194,15 +194,15 @@
 
 - name: Download Go
   get_url:
-    url: "https://go.dev/dl/go{{ go_version }}.linux-ppc64le.tar.gz"
-    dest: "/usr/local/go{{ go_version }}.linux-ppc64le.tar.gz"
+    url: "https://go.dev/dl/go19.linux-ppc64le.tar.gz"
+    dest: "/usr/local/go19.linux-ppc64le.tar.gz"
 
 - name: Extract Go
   unarchive:
-    src: "/usr/local/go{{ go_version }}.linux-ppc64le.tar.gz"
+    src: "/usr/local/go19.linux-ppc64le.tar.gz"
     dest: /usr/local
     remote_src: yes
-    creates: /usr/local/go{{ go_version }}
+    creates: /usr/local/go19
 
 - name: Set Go environment variables
   set_fact:
