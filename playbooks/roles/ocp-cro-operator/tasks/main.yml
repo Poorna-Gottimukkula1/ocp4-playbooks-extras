@@ -2,7 +2,7 @@
 # test
 - name: Read podman password from file
   set_fact:
-    podman_password: "test"
+    podman_password: "{{ PSSS }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
 
 
