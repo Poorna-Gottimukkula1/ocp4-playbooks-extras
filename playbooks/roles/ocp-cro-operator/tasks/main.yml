@@ -209,13 +209,13 @@
     remote_src: yes
     creates: /usr/local/go
 
-- name: export the go
-  shell: |    
-      export GOPATH=/usr/local/go
-      export PATH={{ path }}:$GOPATH/bin
-      echo {{ path }}
-  vars:
-    path: "{{ lookup('env', 'PATH') | default('') }}"
+#- name: export the go
+#  shell: |    
+#      # GOPATH=/usr/local/go
+#      export PATH={{ path }}:$GOPATH/bin
+#      echo {{ path }}
+#  vars:
+#    path: "{{ lookup('env', 'PATH') | default('') }}"
 
 - name: Build cluster-resource-override-admission-operator
   shell: | 
