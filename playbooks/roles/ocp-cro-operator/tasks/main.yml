@@ -207,12 +207,12 @@
     src: "/usr/local/go1.19.linux-ppc64le.tar.gz"
     dest: /usr/local
     remote_src: yes
-    creates: /usr/local/go1.19
+    creates: /usr/local/go
 
-- name: Set Go environment variables
-  set_fact:
-    gopath: /usr/local/go1.19
-    path: "{{ path }}:{{ gopath }}/bin"
+- name: Podman Login
+  shell: |    
+      export GOPATH=/usr/local/go
+      export PATH={{ path }}:$GOPATH/bin 
   vars:
     path: "{{ lookup('env', 'PATH') | default('') }}"
 
