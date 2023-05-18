@@ -2,7 +2,7 @@
 # test
 - name: Read podman password from file
   set_fact:
-    podman_password: "{{ PSSS }}"
+    podman_password: "{{ ansible_env.HOME }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
 
 
@@ -99,8 +99,8 @@
       spec:
         sourceType: grpc
         publisher: redhat
-        displayName: "Red Hat Operators v4.14 Stage"
-        image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-4.14"
+        displayName: "Red Hat Operators v{{ OCP_VERSION }} Stage"
+        image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ OCP_VERSION }}"
     state: present
 
 - name: Create Namespace
@@ -194,36 +194,27 @@
 
 - name: Clone cluster-resource-override-admission-operator repository
   git:
-    repo: https://github.com/openshift/cluster-resource-override-admission-operator.git
+    repo: "{{ CROAO_REP }}"
     dest: /root/cluster-resource-override-admission-operator
 
 - name: Download Go
   get_url:
-    url: "https://go.dev/dl/go1.19.linux-ppc64le.tar.gz"
-    dest: "/usr/local/go1.19.linux-ppc64le.tar.gz"
+    url: "https://go.dev/dl/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
+    dest: "/usr/local/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
 
 - name: Extract Go
   unarchive:
-    src: "/usr/local/go1.19.linux-ppc64le.tar.gz"
+    src: "/root/go{{ GO_VERSION }}}.linux-ppc64le.tar.gz"
     dest: /usr/local
     remote_src: yes
     creates: /usr/local/go
 
-- name: export the go
+- name: Build cluster-resource-override-admission-operator
   shell: |
       set -e    
-      #export GOPATH=/usr/local/go
-      #export PATH=$PATH:$GOPATH/bin
-      echo "$PATH and $GOPATH" > test-suite.txt
+      export GOPATH=/usr/local/go
+      export PATH=$PATH:$GOPATH/bin
       cd /root/cluster-resource-override-admission-operator
       make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
-
-- name: Build cluster-resource-override-admission-operator
-  command: make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
   args:
     chdir: /root/cluster-resource-override-admission-operator
-  environment: 
-    PATH: "/usr/local/go/bin"
-- name: Output the result
-  debug:
-    msg: "cluster-resource-override-admission-operator has been built successful"

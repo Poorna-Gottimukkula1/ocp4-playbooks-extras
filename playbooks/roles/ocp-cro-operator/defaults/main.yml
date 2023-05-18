@@ -1,10 +1,7 @@
 ---
-e2e_tests_enabled: false
-e2e_tests_dir: /tmp/openshift_ws
-e2e_tests_git: "https://github.com/openshift/origin"
-e2e_tests_git_branch: "release-4.4"
-e2e_tests_exclude_list_url: ""
-e2e_upgrade_image: ""
-golang_tarball: "https://dl.google.com/go/go1.12.17.linux-ppc64le.tar.gz"
-github_token: ""
+GO_VERSION: "1.19"
+OCP_VERSION: "4.14"
+PODMAN_PASSWORD: "password"
+golang_tarball: "https://go.dev/dl/go1.19.linux-ppc64le.tar.gz"
+CROAO_REP: "https://github.com/openshift/cluster-resource-override-admission-operator.git"
 
