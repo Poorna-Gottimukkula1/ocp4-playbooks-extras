@@ -222,6 +222,7 @@
     make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
   args:
     chdir: /root/cluster-resource-override-admission-operator
+    executable: /bin/bash
 
 - name: Output the result
   debug:
