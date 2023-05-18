@@ -16,8 +16,8 @@
         state: absent
     # Delete ImageContentSourcePolicy
     - name: "Delete ImageContentSourcePolicy"
-      k8s:
-        apiVersion: operator.openshift.io/v1alpha1
+      kubernetes.core.k8s:
+        api_version: operator.openshift.io/v1alpha1
         kind: ImageContentSourcePolicy
         name: "brew-registry"
         state: absent
