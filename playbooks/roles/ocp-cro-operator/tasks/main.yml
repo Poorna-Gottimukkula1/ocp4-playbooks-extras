@@ -37,7 +37,7 @@
 
 - name: Save decoded pull secret to file
   copy:
-    content: "{{ data_pull[.dockerconfigjson] | b64decode }}"
+    content: "{{ data_pull['.dockerconfigjson'] | b64decode }}"
     dest: authfile
 
 #--------------------needed to test this task before integrating into main branch--
