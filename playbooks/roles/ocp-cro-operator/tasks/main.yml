@@ -31,13 +31,13 @@
     name: pull-secret
   register: pull_secret_result
 
-- name: Read podman password from file
+- name: storing info
   set_fact:
     data_pull: "{{ pull_secret_result.resources[0].data }}"
 
 - name: Save decoded pull secret to file
   copy:
-    content: "{{ data_pull | b64decode }}"
+    content: "{{ data_pull.dockerconfigjson | b64decode }}"
     dest: authfile
 
 #--------------------needed to test this task before integrating into main branch--
@@ -52,7 +52,7 @@
 - name: Podman Login
   shell: |
     echo {{ data_pull }}
-    podman login --authfile ./authfile --username "|shared-qe-temp.src5.75b4d5" --password {{ podman_password }}
+    #podman login --authfile ./authfile --username "|shared-qe-temp.src5.75b4d5" --password {{ podman_password }}
   register: output
   ignore_errors: yes
 
@@ -65,7 +65,7 @@
         name: pull-secret
         namespace: openshift-config
       data:
-        .dockerconfigjson: "{{ pull_secret_result | b64encode }}"
+        .dockerconfigjson: "{{ lookup('file', 'authfile') | b64encode }}"
     state: present
 
 - name: Create ImageContentSourcePolicy
