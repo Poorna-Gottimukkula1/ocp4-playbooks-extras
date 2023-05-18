@@ -200,7 +200,7 @@
 - name: Download Go
   get_url:
     url: "https://go.dev/dl/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
-    dest: "/usr/local/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
+    dest: "/root/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
 
 - name: Extract Go
   unarchive:
