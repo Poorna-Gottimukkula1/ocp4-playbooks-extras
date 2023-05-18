@@ -7,7 +7,7 @@
       kind: ClusterResourceOverride
       metadata:
         name: cluster
-      state: absent
+    state: absent
 
 - name: Delete Subscription
   k8s:
@@ -17,7 +17,7 @@
       metadata:
         name: clusterresourceoverride
         namespace: clusterresourceoverride-operator
-      state: absent
+    state: absent
 
 - name: Delete OperatorGroup
   k8s:
@@ -28,7 +28,7 @@
         generateName: clusterresourceoverride-
         name: clusterresourceoverride-operator
         namespace: clusterresourceoverride-operator
-      state: absent
+    state: absent
 
 - name: Delete Namespace
   k8s:
@@ -37,7 +37,7 @@
       kind: Namespace
       metadata:
         name: clusterresourceoverride-operator
-      state: absent
+    state: absent
 
 - name: Remove cloned repository
   file:
