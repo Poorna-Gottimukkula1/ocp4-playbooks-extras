@@ -152,25 +152,30 @@
         sourceNamespace: openshift-marketplace
     state: present
 
-- name: Wait for Operator pod to be ready
-  k8s_info:
-    api_version: v1
-    kind: Pod
-    namespace: clusterresourceoverride-operator
-  register: operator_pod_info
-  until: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
-  retries: 2
-  delay: 20
+- block:
+  - name: Wait for Operator pod to be ready
+    k8s_info:
+      api_version: v1
+      kind: Pod
+      namespace: clusterresourceoverride-operator
+    register: pod
+    until: ( pod.resources | length == 1) and ( pod.resources[0].status.containerStatuses is defined )
+    retries: 2
+    delay: 20
+  rescue:
+    - name: "Failure"
+      fail:
+        msg: "Operator pod not up after 10 mins"
 
-- name: Check if Operator pod is ready
-  debug:
-    msg: "Operator pod is up and running"
-  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
-
-- name: Check if Operator pod is not ready after 10 mins
-  fail:
-    msg: "Operator pod not up after 10 mins"
-  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 0
+#- name: Check if Operator pod is ready
+#  debug:
+#    msg: "Operator pod is up and running"
+#  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
+#
+#- name: Check if Operator pod is not ready after 10 mins
+#  fail:
+#    msg: "Operator pod not up after 10 mins"
+#  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 0
 
 - name: Create ClusterResourceOverride
   k8s:
