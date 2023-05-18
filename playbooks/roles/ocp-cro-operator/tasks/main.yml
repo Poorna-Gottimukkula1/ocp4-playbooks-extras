@@ -99,8 +99,8 @@
       spec:
         sourceType: grpc
         publisher: redhat
-        displayName: "Red Hat Operators v{{ ocp_version }} Stage"
-        image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ ocp_version }}"
+        displayName: "Red Hat Operators v4.14 Stage"
+        image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-4.14"
     state: present
 
 - name: Create Namespace
