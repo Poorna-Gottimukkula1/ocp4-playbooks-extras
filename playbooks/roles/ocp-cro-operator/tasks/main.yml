@@ -159,8 +159,8 @@
     namespace: clusterresourceoverride-operator
   register: operator_pod_info
   until: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
-  retries: 10
-  delay: 60
+  retries: 2
+  delay: 20
 
 - name: Check if Operator pod is ready
   debug:
