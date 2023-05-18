@@ -211,7 +211,7 @@
 
 - name: Set Go environment variables
   set_fact:
-    gopath: /usr/local/go{{ go_version }}
+    gopath: /usr/local/go1.19
     path: "{{ path }}:{{ gopath }}/bin"
   vars:
     path: "{{ lookup('env', 'PATH') | default('') }}"
