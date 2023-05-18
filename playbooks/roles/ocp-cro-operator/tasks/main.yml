@@ -210,15 +210,13 @@
     remote_src: yes
     creates: /usr/local/go
 
-- name: Podman Login
+- name: export the go
   shell: |    
       export GOPATH=/usr/local/go
-      export PATH={{ path }}:$GOPATH/bin 
+      export PATH={{ path }}:$GOPATH/bin
+      echo {{ path }}
   vars:
     path: "{{ lookup('env', 'PATH') | default('') }}"
-
-- name: Change directory to cluster-resource-override-admission-operator
-  command: cd /root/cluster-resource-override-admission-operator
 
 - name: Build cluster-resource-override-admission-operator
   command: make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig
