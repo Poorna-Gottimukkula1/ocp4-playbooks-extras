@@ -16,10 +16,10 @@
         state: absent
     # Delete ImageContentSourcePolicy
     - name: "Delete ImageContentSourcePolicy"
-      kubernetes.core.k8s:
-        kind: "ImageContentSourcePolicy"
-        name: "brew-registry"
+      k8s:
         apiVersion: operator.openshift.io/v1alpha1
+        kind: ImageContentSourcePolicy
+        name: "brew-registry"
         state: absent
     # Delete Redhat Operator CatalogSource 
     - name: "Delete Redhat Operator CatalogSource"
