@@ -209,20 +209,17 @@
     remote_src: yes
     creates: /usr/local/go
 
-#- name: export the go
-#  shell: |    
-#      # GOPATH=/usr/local/go
-#      export PATH={{ path }}:$GOPATH/bin
-#      echo {{ path }}
-#  vars:
-#    path: "{{ lookup('env', 'PATH') | default('') }}"
+- name: export the go
+  shell: |    
+      export GOPATH=/usr/local/go
+      export PATH=$PATH:$GOPATH/bin
 
 - name: Build cluster-resource-override-admission-operator
   command: make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
   args:
     chdir: /root/cluster-resource-override-admission-operator
-    executable: /bin/bash
-
+    environment:
+    PATH: "/usr/local/go/bin"
 - name: Output the result
   debug:
     msg: "cluster-resource-override-admission-operator has been built successful"
