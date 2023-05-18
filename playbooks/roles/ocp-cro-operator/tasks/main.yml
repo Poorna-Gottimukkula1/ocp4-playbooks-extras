@@ -212,8 +212,8 @@
 - name: export the go
   shell: |
       set -e    
-      export GOPATH=/usr/local/go
-      export PATH=$PATH:$GOPATH/bin
+      #export GOPATH=/usr/local/go
+      #export PATH=$PATH:$GOPATH/bin
       echo "$PATH and $GOPATH" > test-suite.txt
       cd /root/cluster-resource-override-admission-operator
       make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
