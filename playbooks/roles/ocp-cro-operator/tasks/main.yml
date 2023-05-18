@@ -47,6 +47,7 @@
 # Podman login
 - name: Podman Login
   shell: |
+    echo {{ pull_secret_result }}
     podman login --authfile ./authfile --username "|shared-qe-temp.src5.75b4d5" --password {{ podman_password }}
   register: output
   ignore_errors: yes
