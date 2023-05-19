@@ -4,56 +4,6 @@
   set_fact:
     podman_password: "{{ ansible_env.HOME }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
-
-- block:
-    # Delete CRO subscription
-    - name: "Delete CRO subscription"
-      kubernetes.core.k8s:
-        kind: "Subscription"
-        namespace: "clusterresourceoverride-operator"
-        name: "clusterresourceoverride-operator"
-        api_version: '*'
-        state: absent
-    # Delete ImageContentSourcePolicy
-    - name: "Delete ImageContentSourcePolicy"
-      kubernetes.core.k8s:
-        api_version: operator.openshift.io/v1alpha1
-        kind: ImageContentSourcePolicy
-        name: "brew-registry"
-        state: absent
-    # Delete Redhat Operator CatalogSource 
-    - name: "Delete Redhat Operator CatalogSource"
-      kubernetes.core.k8s: 
-        api_version: operators.coreos.com/v1alpha1
-        kind: CatalogSource
-        name: redhat-operators-stage
-        namespace: openshift-marketplace  
-        state: absent
-    # Delete the Namespace
-    - name: "Delete the Namespace"
-      kubernetes.core.k8s: 
-        api_version: v1
-        kind: Namespace
-        name: clusterresourceoverride-operator
-        state: absent
-    # Delete the Operator Group
-    - name: "Delete the Operator Group"
-      kubernetes.core.k8s:
-        api_version: operators.coreos.com/v1
-        kind: OperatorGroup
-        name: clusterresourceoverride-operator 
-        state: absent 
-    # Delete the CRO limits
-    - name: "Delete the CRO limits"
-      kubernetes.core.k8s:
-        api_version: operator.autoscaling.openshift.io/v1
-        kind: ClusterResourceOverride
-        name: cluster
-        state: absent      
-  rescue:
-    - name: "Failure"
-      fail:
-        msg: "failed to delete the resources"  
     
 - name: Set OperatorHub disableAllDefaultSources is to true
   kubernetes.core.k8s:
@@ -267,3 +217,53 @@
       make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
   args:
     chdir: /root/cluster-resource-override-admission-operator
+
+- block:
+    # Delete CRO subscription
+    - name: "Delete CRO subscription"
+      kubernetes.core.k8s:
+        kind: "Subscription"
+        namespace: "clusterresourceoverride-operator"
+        name: "clusterresourceoverride-operator"
+        api_version: '*'
+        state: absent
+    # Delete ImageContentSourcePolicy
+    - name: "Delete ImageContentSourcePolicy"
+      kubernetes.core.k8s:
+        api_version: operator.openshift.io/v1alpha1
+        kind: ImageContentSourcePolicy
+        name: "brew-registry"
+        state: absent
+    # Delete Redhat Operator CatalogSource 
+    - name: "Delete Redhat Operator CatalogSource"
+      kubernetes.core.k8s: 
+        api_version: operators.coreos.com/v1alpha1
+        kind: CatalogSource
+        name: redhat-operators-stage
+        namespace: openshift-marketplace  
+        state: absent
+    # Delete the Namespace
+    - name: "Delete the Namespace"
+      kubernetes.core.k8s: 
+        api_version: v1
+        kind: Namespace
+        name: clusterresourceoverride-operator
+        state: absent
+    # Delete the Operator Group
+    - name: "Delete the Operator Group"
+      kubernetes.core.k8s:
+        api_version: operators.coreos.com/v1
+        kind: OperatorGroup
+        name: clusterresourceoverride-operator 
+        state: absent 
+    # Delete the CRO limits
+    - name: "Delete the CRO limits"
+      kubernetes.core.k8s:
+        api_version: operator.autoscaling.openshift.io/v1
+        kind: ClusterResourceOverride
+        name: cluster
+        state: absent      
+  rescue:
+    - name: "Failure"
+      fail:
+        msg: "failed to delete the resources"      
