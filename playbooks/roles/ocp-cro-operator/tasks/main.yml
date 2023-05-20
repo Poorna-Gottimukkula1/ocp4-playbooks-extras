@@ -225,7 +225,8 @@
 - name: Clone cluster-resource-override-admission-operator repository
   git:
     repo: "{{ cro_git_repository }}"
-    dest: /root/cluster-resource-override-admission-operator
+    dest: "/root/cluster-resource-override-admission-operator"
+    version: master
 
 - name: Download And extracting go
   unarchive:
