@@ -231,7 +231,7 @@
 
 - name: Clone cluster-resource-override-admission-operator repository
   git:
-    repo: "https://github.com/openshift/cluster-resource-override-admission-operator.git"
+    repo: "{{ cro_git_repository }}"
     dest: "/root/cluster-resource-override-admission-operator"  
 
 - name: Build cluster resource override admission operator
