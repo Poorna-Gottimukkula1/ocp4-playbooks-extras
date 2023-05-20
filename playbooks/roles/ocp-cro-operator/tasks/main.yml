@@ -4,7 +4,7 @@
   set_fact:
     podman_password: "{{ ansible_env.HOME }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
-    
+
 - name: Set OperatorHub disableAllDefaultSources is to true
   kubernetes.core.k8s:
     definition:
@@ -17,10 +17,10 @@
     state: patched
   register: output
 
-- name: "Fail if unable to patch the disableAllDefaultSources: true" 
+- name: "Fail if unable to patch the disableAllDefaultSources: true"
   fail:
     msg: "Unable to set disableAllDefaultSources to true : {{  output.stderr }}"
-  when: output.failed  
+  when: output.failed
 
 - name: Get pull secret and decode
   kubernetes.core.k8s_info:
@@ -118,7 +118,7 @@
     - name: "Failure"
       fail:
         msg: "Failed waiting for catalog pod to be ready."
-  
+
 - name: Include role to create image content source policy and catalog source
   include_role:
     name: set-custom-catalogsource
@@ -238,7 +238,7 @@
 
 - name: Build cluster resource override admission operator
   shell: |
-      set -e    
+      set -e
       export GOPATH=/usr/local/go
       export PATH=$PATH:$GOPATH/bin
       cd /root/cluster-resource-override-admission-operator
@@ -267,31 +267,31 @@
       kubernetes.core.k8s:
         api_version: operators.coreos.com/v1
         kind: OperatorGroup
-        name: clusterresourceoverride-operator 
-        state: absent         
+        name: clusterresourceoverride-operator
+        state: absent
     # Delete the Namespace
     - name: "Delete the Namespace"
-      kubernetes.core.k8s: 
+      kubernetes.core.k8s:
         api_version: v1
         kind: Namespace
         name: clusterresourceoverride-operator
-        state: absent   
-    # Delete Redhat Operator CatalogSource 
+        state: absent
+    # Delete Redhat Operator CatalogSource
     - name: "Delete Redhat Operator CatalogSource"
-      kubernetes.core.k8s: 
+      kubernetes.core.k8s:
         api_version: operators.coreos.com/v1alpha1
         kind: CatalogSource
         name: redhat-operators-stage
-        namespace: openshift-marketplace  
-        state: absent 
+        namespace: openshift-marketplace
+        state: absent
     # Delete ImageContentSourcePolicy
     - name: "Delete ImageContentSourcePolicy"
       kubernetes.core.k8s:
         api_version: operator.openshift.io/v1alpha1
         kind: ImageContentSourcePolicy
         name: "brew-registry"
-        state: absent               
+        state: absent
   rescue:
     - name: "Failure"
       fail:
-        msg: "failed to delete the resources"      
+        msg: "failed to delete the resources"
