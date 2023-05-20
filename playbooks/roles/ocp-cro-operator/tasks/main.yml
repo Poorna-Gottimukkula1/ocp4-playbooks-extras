@@ -183,7 +183,7 @@
 
 - name: Clone cluster-resource-override-admission-operator repository
   git:
-    repo: '{{ cro_git_repository }}'
+    repo: {{ cro_git_repo }}
     dest: "/root/cluster-resource-override-admission-operator"  
 
 - name: Build cluster resource override admission operator
