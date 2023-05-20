@@ -71,57 +71,6 @@
     msg: "Set data/pullsecret failed : {{  output.stderr }}"
   when: output.failed
 
-- name: Create ImageContentSourcePolicy
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: operator.openshift.io/v1alpha1
-      kind: ImageContentSourcePolicy
-      metadata:
-        name: brew-registry
-      spec:
-        repositoryDigestMirrors:
-          - mirrors:
-              - brew.registry.redhat.io
-            source: registry.redhat.io
-          - mirrors:
-              - brew.registry.redhat.io
-            source: registry.stage.redhat.io
-          - mirrors:
-              - brew.registry.redhat.io
-            source: registry-proxy.engineering.redhat.com
-    state: present
-
-- name: Create CatalogSource
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: operators.coreos.com/v1alpha1
-      kind: CatalogSource
-      metadata:
-        name: redhat-operators-stage
-        namespace: openshift-marketplace
-      spec:
-        sourceType: grpc
-        publisher: redhat
-        displayName: "Red Hat Operators CRO"
-        image: "{{ cro_catalogsource_image }}"
-    state: present
-
-- block:
-  - name: "Wait for redhat-operators-stage CatalogSource to be ready"
-    kubernetes.core.k8s_info:
-      kind: pod
-      namespace: openshift-marketplace
-      label_selectors:
-        - "olm.catalogSource=redhat-operators-stage"
-    register: pod
-    until: (pod.resources | length == 1) and (pod.resources[0].status.containerStatuses is defined) and (pod.resources[0].status.containerStatuses | map(attribute='ready') | unique == [true])
-    retries: 30
-    delay: 10
-  rescue:
-    - name: "Failure"
-      fail:
-        msg: "Failed waiting for catalog pod to be ready."
-
 - name: Include role to create image content source policy and catalog source
   include_role:
     name: set-custom-catalogsource
