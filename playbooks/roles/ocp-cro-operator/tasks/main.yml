@@ -222,18 +222,18 @@
             limitCPUToMemoryPercent: 200
     state: present
 
-- name: Clone cluster-resource-override-admission-operator repository
-  git:
-    repo: "{{ cro_git_repository }}"
-    dest: "/root/cluster-resource-override-admission-operator"
-    version: master
-
 - name: Download And extracting go
   unarchive:
     src: "{{ cro_golang_tarball }}"
     dest: /usr/local
     remote_src: yes
     creates: /usr/local/go
+
+- name: Clone cluster-resource-override-admission-operator repository
+  git:
+    repo: "{{ cro_git_repository }}"
+    dest: "/root/cluster-resource-override-admission-operator"
+    version: master    
 
 - name: Build cluster resource override admission operator
   shell: |
