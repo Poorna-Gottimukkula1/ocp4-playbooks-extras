@@ -116,7 +116,16 @@
   rescue:
     - name: "Failure"
       fail:
-        msg: "Failed waiting for catalog pod to be ready."    
+        msg: "Failed waiting for catalog pod to be ready."
+  
+- name: Include role to create image content source policy and catalog source
+  include_role:
+    name: set-custom-catalogsource
+  vars:
+    custom_catalogsource_name: "{{ cro_catalogsource }}"
+    custom_catalogsource_display_name: "CRO Operator catalog source"
+    custom_catalogsource_image: "{{ cro_catalogsource_image }}"
+  when: cro_catalogsource_image != '' and cro_catalogsource_image != None
 
 - name: Create Namespace
   kubernetes.core.k8s:

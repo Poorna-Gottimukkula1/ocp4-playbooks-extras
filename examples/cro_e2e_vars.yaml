@@ -1,5 +1,5 @@
 ---
-# defaults file for playbooks/roles/ocp-cro-operator
+#ocp-cro-operator vars
 cro_enabled: false
 cro_install_operator: true
 cro_catalogsource_image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-4.14"
