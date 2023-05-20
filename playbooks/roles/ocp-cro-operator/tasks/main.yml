@@ -67,6 +67,8 @@
       data:
         .dockerconfigjson: "{{ lookup('file', '/root/authfile') | b64encode }}"
     state: present
+  environment:
+    PATH: '{{ ansible_env.HOME }}'
 
 - name: Create ImageContentSourcePolicy
   kubernetes.core.k8s:
