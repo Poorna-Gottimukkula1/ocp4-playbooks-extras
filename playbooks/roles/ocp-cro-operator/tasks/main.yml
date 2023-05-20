@@ -177,8 +177,8 @@
         - "spec.serviceAccountName=clusterresourceoverride-operator"
     register: pod
     until: (pod.resources | length == 1) and (pod.resources[0].status.containerStatuses is defined) and (pod.resources[0].status.containerStatuses | map(attribute='ready') | unique == [true])
-    retries: 5
-    delay: 30
+    retries: 10
+    delay: 60
   rescue:
     - name: "Failure"
       fail:
