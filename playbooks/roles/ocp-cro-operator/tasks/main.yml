@@ -102,6 +102,22 @@
         image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ OCP_VERSION }}"
     state: present
 
+- block:
+  - name: "Wait for redhat-operators-stage CatalogSource to be ready"
+    kubernetes.core.k8s_info:
+      kind: pod
+      namespace: openshift-marketplace
+      label_selectors:
+        - "olm.catalogSource=redhat-operators-stage"
+    register: pod
+    until: (pod.resources | length == 1) and (pod.resources[0].status.containerStatuses is defined) and (pod.resources[0].status.containerStatuses | map(attribute='ready') | unique == [true])
+    retries: 30
+    delay: 10
+  rescue:
+    - name: "Failure"
+      fail:
+        msg: "Failed waiting for catalog pod to be ready."    
+
 - name: Create Namespace
   kubernetes.core.k8s:
     definition:
