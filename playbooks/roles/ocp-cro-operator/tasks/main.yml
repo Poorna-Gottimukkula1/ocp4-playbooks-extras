@@ -65,7 +65,7 @@
         name: pull-secret
         namespace: openshift-config
       data:
-        .dockerconfigjson: "{{ lookup('file', 'authfile') | b64encode }}"
+        .dockerconfigjson: "{{ lookup('file', './authfile') | b64encode }}"
     state: present
 
 - name: Create ImageContentSourcePolicy
