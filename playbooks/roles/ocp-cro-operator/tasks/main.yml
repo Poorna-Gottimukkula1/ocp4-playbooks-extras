@@ -36,7 +36,7 @@
 
 - name: Save decoded pull secret to file
   copy:
-    content: "{{ data_pull['.dockerconfigjson'] | b64decode }}"
+    content: "{{ pull_secret_result.resources[0].data['.dockerconfigjson'] | b64decode }}"
     dest: /root/authfile
 
 #--------------------needed to test this task before integrating into main branch--
@@ -50,25 +50,26 @@
 # Podman login
 - name: Podman Login
   shell: |
-    ls -la
-    echo {{ data_pull }}
-    podman login --authfile /root/authfile --username {{ cro_podman_username }} --password {{ podman_password }}
+    podman login --authfile /root/authfile --username {{ podman_username }}  --password {{ podman_password }}
   register: output
   ignore_errors: yes
 
-- name: Set data for secret/pull-secret
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: pull-secret
-        namespace: openshift-config
-      data:
-        .dockerconfigjson: "{{ lookup('file', '/root/authfile') | b64encode }}"
-    state: present
-  environment:
-    PATH: '{{ ansible_env.HOME }}'
+- name: Fail if podman login failed
+  fail:
+    msg: "Podman login failed : {{  output.stderr }}"
+  when: output.failed
+
+# Setting pullsecret
+- name: Set data/pullsecret
+  shell: |
+    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/root/authfile
+  register: output
+  ignore_errors: yes
+
+- name: Fail if Set data/pullsecret failed
+  fail:
+    msg: "Set data/pullsecret failed : {{  output.stderr }}"
+  when: output.failed
 
 - name: Create ImageContentSourcePolicy
   kubernetes.core.k8s:
