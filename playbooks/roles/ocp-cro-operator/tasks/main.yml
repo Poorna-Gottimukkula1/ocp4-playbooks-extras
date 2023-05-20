@@ -2,7 +2,7 @@
 # test
 - name: Read podman password from file
   set_fact:
-    podman_password: "{{ ansible_env.HOME }}"
+    podman_password: "{{ cro_podman_password }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
 
 - name: Set OperatorHub disableAllDefaultSources is to true
@@ -37,7 +37,7 @@
 - name: Save decoded pull secret to file
   copy:
     content: "{{ data_pull['.dockerconfigjson'] | b64decode }}"
-    dest: authfile
+    dest: /root/authfile
 
 #--------------------needed to test this task before integrating into main branch--
 #- name: Log in to podman
@@ -52,7 +52,7 @@
   shell: |
     ls -la
     echo {{ data_pull }}
-    #podman login --authfile ./authfile --username "|shared-qe-temp.src5.75b4d5" --password {{ podman_password }}
+    podman login --authfile /root/authfile --username {{ cro_podman_username }} --password {{ podman_password }}
   register: output
   ignore_errors: yes
 
@@ -65,7 +65,7 @@
         name: pull-secret
         namespace: openshift-config
       data:
-        .dockerconfigjson: "{{ lookup('file', './authfile') | b64encode }}"
+        .dockerconfigjson: "{{ lookup('file', '/root/authfile') | b64encode }}"
     state: present
 
 - name: Create ImageContentSourcePolicy

@@ -9,5 +9,6 @@ cro_golang_tarball: "https://go.dev/dl/go1.20.linux-ppc64le.tar.gz"
 cro_git_repository: "https://github.com/openshift/cluster-resource-override-admission-operator.git"
 cro_git_branch: "master"
 cro_podman_password: ""
+cro_podman_username: "|shared-qe-temp.src5.75b4d5"
 cro_cleanup: true
 
