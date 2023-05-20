@@ -6,7 +6,7 @@ cro_catalogsource_image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-
 cro_catalogsource: "redhat-operators"
 cro_directory: "/tmp/cro"
 cro_golang_tarball: "https://go.dev/dl/go1.20.linux-ppc64le.tar.gz"
-cro_git_repository: https://github.com/openshift/cluster-resource-override-admission-operator.git
+cro_git_repo: https://github.com/openshift/cluster-resource-override-admission-operator.git
 cro_git_branch: "master"
 cro_podman_password: ""
 cro_podman_username: "|shared-qe-temp.src5.75b4d5"
