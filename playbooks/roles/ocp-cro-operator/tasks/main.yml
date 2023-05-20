@@ -224,17 +224,12 @@
 
 - name: Clone cluster-resource-override-admission-operator repository
   git:
-    repo: "{{ CROAO_REP }}"
+    repo: "{{ cro_git_repository }}"
     dest: /root/cluster-resource-override-admission-operator
 
-- name: Download Go
-  get_url:
-    url: "https://go.dev/dl/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
-    dest: "/root/go{{ GO_VERSION }}.linux-ppc64le.tar.gz"
-
-- name: Extract Go
+- name: Download And extracting go
   unarchive:
-    src: "/root/go{{ GO_VERSION }}}.linux-ppc64le.tar.gz"
+    src: "{{ cro_golang_tarball }}"
     dest: /usr/local
     remote_src: yes
     creates: /usr/local/go
