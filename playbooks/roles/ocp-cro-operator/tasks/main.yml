@@ -50,6 +50,7 @@
 # Podman login
 - name: Podman Login
   shell: |
+    ls -la
     echo {{ data_pull }}
     #podman login --authfile ./authfile --username "|shared-qe-temp.src5.75b4d5" --password {{ podman_password }}
   register: output
