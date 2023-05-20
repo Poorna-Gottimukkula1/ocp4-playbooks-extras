@@ -245,27 +245,12 @@
         name: "clusterresourceoverride-operator"
         api_version: '*'
         state: absent
-    # Delete ImageContentSourcePolicy
-    - name: "Delete ImageContentSourcePolicy"
+    # Delete the CRO limits
+    - name: "Delete the CRO limits"
       kubernetes.core.k8s:
-        api_version: operator.openshift.io/v1alpha1
-        kind: ImageContentSourcePolicy
-        name: "brew-registry"
-        state: absent
-    # Delete Redhat Operator CatalogSource 
-    - name: "Delete Redhat Operator CatalogSource"
-      kubernetes.core.k8s: 
-        api_version: operators.coreos.com/v1alpha1
-        kind: CatalogSource
-        name: redhat-operators-stage
-        namespace: openshift-marketplace  
-        state: absent
-    # Delete the Namespace
-    - name: "Delete the Namespace"
-      kubernetes.core.k8s: 
-        api_version: v1
-        kind: Namespace
-        name: clusterresourceoverride-operator
+        api_version: operator.autoscaling.openshift.io/v1
+        kind: ClusterResourceOverride
+        name: cluster
         state: absent
     # Delete the Operator Group
     - name: "Delete the Operator Group"
@@ -273,14 +258,29 @@
         api_version: operators.coreos.com/v1
         kind: OperatorGroup
         name: clusterresourceoverride-operator 
+        state: absent         
+    # Delete the Namespace
+    - name: "Delete the Namespace"
+      kubernetes.core.k8s: 
+        api_version: v1
+        kind: Namespace
+        name: clusterresourceoverride-operator
+        state: absent   
+    # Delete Redhat Operator CatalogSource 
+    - name: "Delete Redhat Operator CatalogSource"
+      kubernetes.core.k8s: 
+        api_version: operators.coreos.com/v1alpha1
+        kind: CatalogSource
+        name: redhat-operators-stage
+        namespace: openshift-marketplace  
         state: absent 
-    # Delete the CRO limits
-    - name: "Delete the CRO limits"
+    # Delete ImageContentSourcePolicy
+    - name: "Delete ImageContentSourcePolicy"
       kubernetes.core.k8s:
-        api_version: operator.autoscaling.openshift.io/v1
-        kind: ClusterResourceOverride
-        name: cluster
-        state: absent      
+        api_version: operator.openshift.io/v1alpha1
+        kind: ImageContentSourcePolicy
+        name: "brew-registry"
+        state: absent               
   rescue:
     - name: "Failure"
       fail:
