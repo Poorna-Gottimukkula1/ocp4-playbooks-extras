@@ -3,6 +3,9 @@
 - name: Read podman password from file
   set_fact:
     podman_password: "{{ cro_podman_password }}"
+- name: debub
+  shell: |
+    echo "{{ cro_podman_password }} and {{ cro_git_repository }}"
  #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
 
 - name: Set OperatorHub disableAllDefaultSources is to true
@@ -105,7 +108,7 @@
       apiVersion: operators.coreos.com/v1
       kind: OperatorGroup
       metadata:
-        generateName: clusterresourceoverride-
+        generateName: clusterresourceoverride-operator
         name: clusterresourceoverride-operator
         namespace: clusterresourceoverride-operator
       spec:
@@ -180,7 +183,7 @@
 
 - name: Clone cluster-resource-override-admission-operator repository
   git:
-    repo: "{{ cro_git_repository }}"
+    repo: '{{ cro_git_repository }}'
     dest: "/root/cluster-resource-override-admission-operator"  
 
 - name: Build cluster resource override admission operator
