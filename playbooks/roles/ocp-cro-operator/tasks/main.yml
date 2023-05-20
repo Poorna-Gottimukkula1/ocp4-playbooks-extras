@@ -102,8 +102,8 @@
       spec:
         sourceType: grpc
         publisher: redhat
-        displayName: "Red Hat Operators v{{ OCP_VERSION }} Stage"
-        image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ OCP_VERSION }}"
+        displayName: "Red Hat Operators CRO"
+        image: "{{ cro_catalogsource_image }}"
     state: present
 
 - block:
