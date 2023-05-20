@@ -157,15 +157,17 @@
       api_version: v1
       kind: Pod
       namespace: clusterresourceoverride-operator
+      field_selectors:
+        - "spec.serviceAccountName=clusterresourceoverride-operator"
     register: pod
-    until: ( pod.resources | length >= 0 ) and ( pod.resources[0].status.containerStatuses is defined )
+    until: (pod.resources | length == 1) and (pod.resources[0].status.containerStatuses is defined) and (pod.resources[0].status.containerStatuses | map(attribute='ready') | unique == [true])
     retries: 5
     delay: 30
   rescue:
     - name: "Failure"
       fail:
         msg: "Operator pod not up after 10 mins"
-
+#Login to the console with user: kubeadmin and password: Jd9JR-Coo4y-ALapc-6LW3z
 #- name: Check if Operator pod is ready
 #  debug:
 #    msg: "Operator pod is up and running"
