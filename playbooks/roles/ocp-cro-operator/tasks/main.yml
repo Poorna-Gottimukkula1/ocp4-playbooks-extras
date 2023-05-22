@@ -212,15 +212,19 @@
         name: clusterresourceoverride
         api_version: operators.coreos.com/v1alpha1
         state: absent
-    # Delete CRO CSV
+    # Delete CRO CSV    
+    - name: Get the name of cluster service version
+      shell: oc get clusterserviceversion -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
+      register: cro_csv
+
     - name: "Delete CRO subscription"
       kubernetes.core.k8s:
         kind: ClusterServiceVersion
         namespace: clusterresourceoverride-operator
-        label_selectors:
-          - olm-owner-enterprise-app: clusterresourceoverride-operator
+        name: "{{ cro_csv.stdout }}"
         api_version: operators.coreos.com/v1alpha1
-        state: absent        
+        state: absent
+      when: cro_csv.stdout|length > 0
     # Delete the Operator Group
     - name: "Delete the Operator Group"
       kubernetes.core.k8s:
