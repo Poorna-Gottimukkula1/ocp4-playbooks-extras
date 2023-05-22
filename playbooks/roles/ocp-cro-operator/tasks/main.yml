@@ -217,8 +217,8 @@
       kubernetes.core.k8s:
         kind: ClusterServiceVersion
         namespace: clusterresourceoverride-operator
-        label_selectors:
-          - olm-owner-enterprise-app: clusterresourceoverride-operator
+        field_selectors:
+          - "metadata.olm.targetNamespaces=clusterresourceoverride-operator"
         api_version: operators.coreos.com/v1alpha1
         state: absent        
     # Delete the Operator Group
