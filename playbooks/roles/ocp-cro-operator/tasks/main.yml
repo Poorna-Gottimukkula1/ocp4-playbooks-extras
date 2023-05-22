@@ -190,7 +190,7 @@
     - name: Get the name of cluster service version
       shell: oc get clusterserviceversion -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
       register: cro_csv
-    - name: "Delete CRO subscription"
+    - name: "Delete CRO CSV"
       kubernetes.core.k8s:
         kind: ClusterServiceVersion
         namespace: clusterresourceoverride-operator
@@ -203,6 +203,7 @@
       kubernetes.core.k8s:
         api_version: operators.coreos.com/v1
         kind: OperatorGroup
+        namespace: clusterresourceoverride-operator
         name: clusterresourceoverride-operator
         state: absent
     # Delete the Namespace
