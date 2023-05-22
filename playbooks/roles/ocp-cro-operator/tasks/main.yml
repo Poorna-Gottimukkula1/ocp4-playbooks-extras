@@ -1,10 +1,6 @@
 ---
 # tasks file for playbooks/roles/ocp-cro-operator
 
-- name: Check if cluster operators and nodes are healthy
-  include_role:
-    name: check-cluster-health
-
 - name: Set OperatorHub disableAllDefaultSources is to true
   kubernetes.core.k8s:
     definition:
