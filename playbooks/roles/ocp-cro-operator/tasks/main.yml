@@ -1,12 +1,9 @@
 ---
-# test
-- name: Read podman password from file
-  set_fact:
-    podman_password: "{{ cro_podman_password }}"
-- name: debub
-  shell: |
-    echo "{{ cro_podman_password }} and {{ cro_git_repo }}"
- #   podman_password1: "{{ lookup('file', 'podman_pass') }}"
+# tasks file for playbooks/roles/ocp-cro-operator
+
+- name: Check if cluster operators and nodes are healthy
+  include_role:
+    name: check-cluster-health
 
 - name: Set OperatorHub disableAllDefaultSources is to true
   kubernetes.core.k8s:
@@ -25,7 +22,7 @@
     msg: "Unable to set disableAllDefaultSources to true : {{  output.stderr }}"
   when: output.failed
 
-- name: Get pull secret and decode
+- name: Get pull secret
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Secret
@@ -33,22 +30,10 @@
     name: pull-secret
   register: pull_secret_result
 
-- name: storing info
-  set_fact:
-    data_pull: "{{ pull_secret_result.resources[0].data }}"
-
-- name: Save decoded pull secret to file
+- name: save pull secret to file
   copy:
     content: "{{ pull_secret_result.resources[0].data['.dockerconfigjson'] | b64decode }}"
     dest: /root/authfile
-
-#--------------------needed to test this task before integrating into main branch--
-#- name: Log in to podman
-#  community.general.podman_login:
-#    authfile: ./authfile
-#    username: "|shared-qe-temp.src5.75b4d5"
-#    password: "{{ podman_password }}"
-#---------------------------------
 
 # Podman login
 - name: Podman Login
@@ -62,7 +47,6 @@
     msg: "Podman login failed : {{  output.stderr }}"
   when: output.failed
 
-# Setting pullsecret
 - name: Set data/pullsecret
   shell: |
     oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/root/authfile
@@ -74,7 +58,7 @@
     msg: "Set data/pullsecret failed : {{  output.stderr }}"
   when: output.failed
 
-- name: Include role to create image content source policy and catalog source
+- name: Create ImageContentSourcePolicy and CatalogSource
   include_role:
     name: set-custom-catalogsource
   vars:
@@ -116,7 +100,7 @@
           - clusterresourceoverride-operator
     state: present
 
-- name: Create Subscription
+- name: Create Subscription for clusterresourceoverride
   kubernetes.core.k8s:
     definition:
       apiVersion: operators.coreos.com/v1alpha1
@@ -149,16 +133,6 @@
       fail:
         msg: "Operator pod not up after 10 mins"
 #Login to the console with user: kubeadmin and password: Jd9JR-Coo4y-ALapc-6LW3z
-#- name: Check if Operator pod is ready
-#  debug:
-#    msg: "Operator pod is up and running"
-#  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 1
-#
-#- name: Check if Operator pod is not ready after 10 mins
-#  fail:
-#    msg: "Operator pod not up after 10 mins"
-#  when: operator_pod_info.resources | selectattr('status.phase', 'eq', 'Running') | list | length == 0
-
 - name: Create ClusterResourceOverride
   kubernetes.core.k8s:
     definition:
@@ -184,7 +158,7 @@
 - name: Clone cluster-resource-override-admission-operator repository
   git:
     repo: "{{ cro_git_repo }}"
-    dest: "/root/cluster-resource-override-admission-operator"  
+    dest: "/root/cluster-resource-override-admission-operator"
 
 - name: Build cluster resource override admission operator
   shell: |
@@ -212,11 +186,10 @@
         name: clusterresourceoverride
         api_version: operators.coreos.com/v1alpha1
         state: absent
-    # Delete CRO CSV    
+    # Delete CRO CSV
     - name: Get the name of cluster service version
       shell: oc get clusterserviceversion -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
       register: cro_csv
-
     - name: "Delete CRO subscription"
       kubernetes.core.k8s:
         kind: ClusterServiceVersion
@@ -233,12 +206,12 @@
         name: clusterresourceoverride-operator
         state: absent
     # Delete the Namespace
-#    - name: "Delete the Namespace"
-#      kubernetes.core.k8s:
-#        api_version: v1
-#        kind: Namespace
-#        name: clusterresourceoverride-operator
-#        state: absent
+    - name: "Delete the Namespace"
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: clusterresourceoverride-operator
+        state: absent
     # Delete Redhat Operator CatalogSource
     - name: "Delete Redhat Operator CatalogSource"
       kubernetes.core.k8s:
@@ -258,3 +231,4 @@
     - name: "Failure"
       fail:
         msg: "failed to delete the resources"
+  when: cro_cleanup

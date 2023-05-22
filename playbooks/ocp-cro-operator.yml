@@ -1,5 +1,5 @@
 ---
-- name: Run e2e test cases
+- name: Run cro operator e2e test cases
   hosts: bastion
   roles:
   - ocp-cro-operator
