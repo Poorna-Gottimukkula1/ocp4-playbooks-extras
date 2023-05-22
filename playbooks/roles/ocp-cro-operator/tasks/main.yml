@@ -197,14 +197,6 @@
     chdir: /root/cluster-resource-override-admission-operator
 
 - block:
-    # Delete CRO subscription
-    - name: "Delete CRO subscription"
-      kubernetes.core.k8s:
-        kind: "Subscription"
-        namespace: "clusterresourceoverride-operator"
-        name: clusterresourceoverride
-        api_version: '*'
-        state: absent
     # Delete the CRO limits
     - name: "Delete the CRO limits"
       kubernetes.core.k8s:
@@ -212,6 +204,23 @@
         kind: ClusterResourceOverride
         name: cluster
         state: absent
+    # Delete CRO subscription
+    - name: "Delete CRO subscription"
+      kubernetes.core.k8s:
+        kind: Subscription
+        namespace: clusterresourceoverride-operator
+        name: clusterresourceoverride
+        api_version: operators.coreos.com/v1alpha1
+        state: absent
+    # Delete CRO CSV
+    - name: "Delete CRO subscription"
+      kubernetes.core.k8s:
+        kind: ClusterServiceVersion
+        namespace: clusterresourceoverride-operator
+        label_selectors:
+          - olm-owner-enterprise-app: clusterresourceoverride-operator
+        api_version: operators.coreos.com/v1alpha1
+        state: absent        
     # Delete the Operator Group
     - name: "Delete the Operator Group"
       kubernetes.core.k8s:
