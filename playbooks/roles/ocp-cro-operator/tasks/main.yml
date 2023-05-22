@@ -202,7 +202,7 @@
       kubernetes.core.k8s:
         kind: "Subscription"
         namespace: "clusterresourceoverride-operator"
-        name: "clusterresourceoverride-operator"
+        name: clusterresourceoverride
         api_version: '*'
         state: absent
     # Delete the CRO limits
