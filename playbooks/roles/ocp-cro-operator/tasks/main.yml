@@ -220,12 +220,12 @@
         name: clusterresourceoverride-operator
         state: absent
     # Delete the Namespace
-    - name: "Delete the Namespace"
-      kubernetes.core.k8s:
-        api_version: v1
-        kind: Namespace
-        name: clusterresourceoverride-operator
-        state: absent
+#    - name: "Delete the Namespace"
+#      kubernetes.core.k8s:
+#        api_version: v1
+#        kind: Namespace
+#        name: clusterresourceoverride-operator
+#        state: absent
     # Delete Redhat Operator CatalogSource
     - name: "Delete Redhat Operator CatalogSource"
       kubernetes.core.k8s:
