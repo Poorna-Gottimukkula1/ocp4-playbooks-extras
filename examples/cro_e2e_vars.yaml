@@ -1,0 +1,15 @@
+---
+#ocp-cro-operator vars
+cro_enabled: false
+cro_install_operator: true
+cro_enable_global_secret: true
+ocp_version: "4.13"
+cro_catalogsource_image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ ocp_version }}"
+cro_catalogsource: "redhat-operators-stage"
+cro_upgrade_channel: "stable"
+cro_directory: "/tmp/cro"
+cro_golang_tarball: "https://go.dev/dl/go1.20.linux-ppc64le.tar.gz"
+cro_e2e: true
+cro_e2e_git_repository: "https://github.com/openshift/cluster-resource-override-admission-operator.git"
+cro_git_branch: "master"
+cro_cleanup: true
