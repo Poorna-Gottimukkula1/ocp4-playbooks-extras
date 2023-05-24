@@ -1,7 +1,7 @@
-ocp-e2e: OCP End to End Test Cases
+ocp-cro-e2e: OCP Cluster Resource Override admission operator e2e Test Cases
 =========
 
-This module will run end to end test cases. Results will be stored in ~/e2e_tests_results/ directory on bastion.
+This module will run end to end test cases. Results will be stored in ~/cro_e2e_output.txt/ file on bastion.
 
 Requirements
 ------------
@@ -13,14 +13,13 @@ Role Variables
 
 | Variable                    | Required | Default                                    | Comments                                            |
 |-----------------------------|----------|--------------------------------------------|-----------------------------------------------------|
-| e2e_tests_git               | no       | https://github.com/openshift/origin        | Git repo url for the e2e tests                      |
-| e2e_tests_git_branch        | no       | release-4.12                               | Git repo branch for e2e tests                       |
-| e2e_tests_exclude_list_url  | no       | ""                                         | URL to list of testcases to be excluded             |
-| e2e_tests_dir               | no       | /tmp/openshift_ws                          | Test directory                                      |
-| e2e_upgrade_image           | no       | ""                                         | The cluster will be upgraded to this image by e2e. In case of an empty string, the upgrade won't be done. |
-| golang_tarball              | no       | https://dl.google.com/go/go1.18.6.linux-ppc64le.tar.gz | HTTP URL for golang tarball             |
-| github_token                | no       | ""                                         | Github token used for authentication                |
-| e2e_tests_enabled           | no       | false                                      | Flag to be set to true to enable e2e tests playbook |
+| cro_podman_password         | no       | "https://github.com/openshift/origin"        | Git repo url for the e2e tests                      |
+| cro_podman_username         | no       | https://github.com/openshift/origin        | Git repo url for the e2e tests                      |
+| cro_git_repo                | no       | ""                                         | URL to list of testcases to be excluded             |
+| cro_catalogsource           | no       | /tmp/openshift_ws                          | Test directory                                      |
+| cro_catalogsource_image     | no       | ""                                         | The cluster will be upgraded to this image by e2e. In case of an empty string, the upgrade won't be done. |
+| cro_golang_tarball          | no       | https://dl.google.com/go/go1.20.linux-ppc64le.tar.gz | HTTP URL for golang tarball             |
+| cro_enabled                 | no       | false                                      | Flag to be set to true to enable e2e tests playbook |
 
 Dependencies
 ------------
@@ -30,10 +29,10 @@ Dependencies
 Example Playbook
 ----------------
 
-    - name: Run e2e test cases
+    - name: Run cro e2e test cases
       hosts: bastion
       roles:
-      - ocp-e2e
+      - ocp-cro-operator
 
 License
 -------
