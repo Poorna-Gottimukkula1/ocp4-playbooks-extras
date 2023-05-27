@@ -1,179 +1,174 @@
 ---
 # tasks file for playbooks/roles/ocp-cro-operator
 
-- name: Set OperatorHub disableAllDefaultSources is to true
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: config.openshift.io/v1
-      kind: OperatorHub
-      metadata:
-        name: cluster
-      spec:
-        disableAllDefaultSources: true
-    state: patched
-  register: output
+# - name: Set OperatorHub disableAllDefaultSources is to true
+#   kubernetes.core.k8s:
+#     definition:
+#       apiVersion: config.openshift.io/v1
+#       kind: OperatorHub
+#       metadata:
+#         name: cluster
+#       spec:
+#         disableAllDefaultSources: true
+#     state: patched
+#   register: output
 
-- name: "Fail if unable to patch the disableAllDefaultSources: true"
-  fail:
-    msg: "Unable to set disableAllDefaultSources to true : {{  output.stderr }}"
-  when: output.failed
+# - name: "Fail if unable to patch the disableAllDefaultSources: true"
+#   fail:
+#     msg: "Unable to set disableAllDefaultSources to true : {{  output.stderr }}"
+#   when: output.failed
 
-- name: Get pull secret
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    namespace: openshift-config
-    name: pull-secret
-  register: pull_secret_result
+# - name: Get pull secret
+#   kubernetes.core.k8s_info:
+#     api_version: v1
+#     kind: Secret
+#     namespace: openshift-config
+#     name: pull-secret
+#   register: pull_secret_result
 
-- name: save pull secret to file
-  copy:
-    content: "{{ pull_secret_result.resources[0].data['.dockerconfigjson'] | b64decode }}"
-    dest: /root/authfile
+# - name: save pull secret to file
+#   copy:
+#     content: "{{ pull_secret_result.resources[0].data['.dockerconfigjson'] | b64decode }}"
+#     dest: /root/authfile
 
-# Podman login
-- name: Podman Login
-  shell: |
-    podman login --authfile /root/authfile --username "{{ cro_podman_username }}"  --password "{{ cro_podman_password }}"
-  register: output
-  ignore_errors: yes
+# # Podman login
+# - name: Podman Login
+#   shell: |
+#     podman login --authfile /root/authfile --username "{{ cro_podman_username }}"  --password "{{ cro_podman_password }}"
+#   register: output
+#   ignore_errors: yes
 
-- name: Fail if podman login failed
-  fail:
-    msg: "Podman login failed : {{  output.stderr }}"
-  when: output.failed
+# - name: Fail if podman login failed
+#   fail:
+#     msg: "Podman login failed : {{  output.stderr }}"
+#   when: output.failed
 
-- name: Set data/pullsecret
-  shell: |
-    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/root/authfile
-  register: output
-  ignore_errors: yes
+# - name: Set data/pullsecret
+#   shell: |
+#     oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/root/authfile
+#   register: output
+#   ignore_errors: yes
 
-- name: Fail if Set data/pullsecret failed
-  fail:
-    msg: "Set data/pullsecret failed : {{  output.stderr }}"
-  when: output.failed
-
-- name: Create ImageContentSourcePolicy and CatalogSource
-  include_role:
-    name: set-custom-catalogsource
-  vars:
-    custom_catalogsource_name: "{{ cro_catalogsource }}"
-    custom_catalogsource_display_name: "CRO Operator catalog source"
-    custom_catalogsource_image: "{{ cro_catalogsource_image }}"
-  when: cro_catalogsource_image != '' and cro_catalogsource_image != None
-
-- name: Create Namespace
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        labels:
-          pod-security.kubernetes.io/audit: privileged
-          pod-security.kubernetes.io/enforce: privileged
-          pod-security.kubernetes.io/warn: privileged
-          security.openshift.io/scc.podSecurityLabelSync: "false"
-          kubernetes.io/metadata.name: clusterresourceoverride-operator
-        name: clusterresourceoverride-operator
-      name: clusterresourceoverride-operator
-      spec:
-        finalizers:
-          - kubernetes
-    state: present
-
-- name: Create OperatorGroup
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: operators.coreos.com/v1
-      kind: OperatorGroup
-      metadata:
-        generateName: clusterresourceoverride-operator
-        name: clusterresourceoverride-operator
-        namespace: clusterresourceoverride-operator
-      spec:
-        targetNamespaces:
-          - clusterresourceoverride-operator
-    state: present
-
-- name: Create Subscription for clusterresourceoverride
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: operators.coreos.com/v1alpha1
-      kind: Subscription
-      metadata:
-        name: clusterresourceoverride
-        namespace: clusterresourceoverride-operator
-      spec:
-        channel: stable
-        installPlanApproval: Automatic
-        name: clusterresourceoverride
-        source: redhat-operators-stage
-        sourceNamespace: openshift-marketplace
-    state: present
+# - name: Fail if Set data/pullsecret failed
+#   fail:
+#     msg: "Set data/pullsecret failed : {{  output.stderr }}"
+#   when: output.failed
 
 - block:
-  - name: Wait for Operator pod to be ready
-    kubernetes.core.k8s_info:
-      api_version: v1
-      kind: Pod
-      namespace: clusterresourceoverride-operator
-      field_selectors:
-        - "spec.serviceAccountName=clusterresourceoverride-operator"
-    register: pod
-    until: (pod.resources | length == 1) and (pod.resources[0].status.containerStatuses is defined) and (pod.resources[0].status.containerStatuses | map(attribute='ready') | unique == [true])
-    retries: 10
-    delay: 60
-  rescue:
-    - name: "Failure"
-      fail:
-        msg: "Operator pod not up after 10 mins"
-#Login to the console with user: kubeadmin and password: Jd9JR-Coo4y-ALapc-6LW3z
-- name: Create ClusterResourceOverride
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: operator.autoscaling.openshift.io/v1
-      kind: ClusterResourceOverride
-      metadata:
-        name: cluster
-      spec:
-        podResourceOverride:
-          spec:
-            memoryRequestToLimitPercent: 50
-            cpuRequestToLimitPercent: 25
-            limitCPUToMemoryPercent: 200
-    state: present
+    - name: Create ImageContentSourcePolicy and CatalogSource
+      include_role:
+        name: set-custom-catalogsource
+      vars:
+        custom_catalogsource_name: "{{ cro_catalogsource }}"
+        custom_catalogsource_display_name: "CRO Operator catalog source"
+        custom_catalogsource_image: "{{ cro_catalogsource_image }}"
+      when: cro_catalogsource_image != '' and cro_catalogsource_image != None
 
-- name: Download And extracting go
-  unarchive:
-    src: "{{ cro_golang_tarball }}"
-    dest: /usr/local
-    remote_src: yes
-    creates: /usr/local/go
-
-- name: Clone cluster-resource-override-admission-operator repository
-  git:
-    repo: "{{ cro_git_repo }}"
-    dest: "/root/cluster-resource-override-admission-operator"
-
-- name: Build cluster resource override admission operator
-  shell: |
-      set -e
-      export GOPATH=/usr/local/go
-      export PATH=$PATH:$GOPATH/bin
-      cd /root/cluster-resource-override-admission-operator
-      make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
-  args:
-    chdir: /root/cluster-resource-override-admission-operator
-
-- block:
-    # Delete the CRO limits
-    - name: "Delete the CRO limits"
+    - name: Create Namespace
       kubernetes.core.k8s:
-        api_version: operator.autoscaling.openshift.io/v1
-        kind: ClusterResourceOverride
-        name: cluster
-        state: absent
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            labels:
+              pod-security.kubernetes.io/audit: privileged
+              pod-security.kubernetes.io/enforce: privileged
+              pod-security.kubernetes.io/warn: privileged
+              security.openshift.io/scc.podSecurityLabelSync: "false"
+              kubernetes.io/metadata.name: clusterresourceoverride-operator
+            name: clusterresourceoverride-operator
+          name: clusterresourceoverride-operator
+          spec:
+            finalizers:
+              - kubernetes
+        state: present
+
+    - name: Create OperatorGroup
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operators.coreos.com/v1
+          kind: OperatorGroup
+          metadata:
+            generateName: clusterresourceoverride-operator
+            name: clusterresourceoverride-operator
+            namespace: clusterresourceoverride-operator
+          spec:
+            targetNamespaces:
+              - clusterresourceoverride-operator
+        state: present
+
+    - name: Create Subscription for clusterresourceoverride
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operators.coreos.com/v1alpha1
+          kind: Subscription
+          metadata:
+            name: clusterresourceoverride
+            namespace: clusterresourceoverride-operator
+          spec:
+            channel: "{{ cro_upgrade_channel }}"
+            installPlanApproval: Automatic
+            name: clusterresourceoverride
+            source: "{{ cro_catalogsource }}"
+            sourceNamespace: openshift-marketplace
+        state: present
+
+    - block:
+        - name: Wait for Operator pod to be ready
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Pod
+            namespace: clusterresourceoverride-operator
+            field_selectors:
+              - "spec.serviceAccountName=clusterresourceoverride-operator"
+          register: pod
+          until: (pod.resources | length == 1) and (pod.resources[0].status.containerStatuses is defined) and (pod.resources[0].status.containerStatuses | map(attribute='ready') | unique == [true])
+          retries: 10
+          delay: 60
+      rescue:
+        - name: "Failure"
+          fail:
+            msg: "Operator pod not up after 10 mins"
+  when: cro_install_operator
+
+- block:
+    - name: Create ClusterResourceOverride
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operator.autoscaling.openshift.io/v1
+          kind: ClusterResourceOverride
+          metadata:
+            name: cluster
+          spec:
+            podResourceOverride:
+              spec:
+                memoryRequestToLimitPercent: 50
+                cpuRequestToLimitPercent: 25
+                limitCPUToMemoryPercent: 200
+        state: present
+    - name: Download And extracting go
+      unarchive:
+        src: "{{ cro_golang_tarball }}"
+        dest: /usr/local
+        remote_src: yes
+        creates: /usr/local/go
+
+    - name: Clone cluster-resource-override-admission-operator repository
+      git:
+        repo: "{{ cro_git_repo }}"
+        dest: "/root/cluster-resource-override-admission-operator"
+
+    - name: Build cluster resource override admission operator
+      shell: |
+          set -e
+          export GOPATH=/usr/local/go
+          export PATH=$PATH:$GOPATH/bin
+          cd /root/cluster-resource-override-admission-operator
+          make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
+      args:
+        chdir: /root/cluster-resource-override-admission-operator
+  when: cro_e2e or cro_enabled
+- block:
     # Delete CRO subscription
     - name: "Delete CRO subscription"
       kubernetes.core.k8s:
