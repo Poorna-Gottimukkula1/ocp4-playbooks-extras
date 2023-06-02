@@ -1,60 +1,141 @@
 ---
-# tasks file for playbooks/roles/ocp-cro-operator
+- name: Check if cluster operators and nodes are healthy
+  include_role:
+    name: check-cluster-health
+- name: Clean UP
+  block:
+    - name: Get the name of cluster service version
+      shell: oc get clusterserviceversion -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
+      register: clusterresourceoverride-operator_csv
 
-# - name: Set OperatorHub disableAllDefaultSources is to true
-#   kubernetes.core.k8s:
-#     definition:
-#       apiVersion: config.openshift.io/v1
-#       kind: OperatorHub
-#       metadata:
-#         name: cluster
-#       spec:
-#         disableAllDefaultSources: true
-#     state: patched
-#   register: output
+    - name: Get the name of subscription
+      shell: oc get subscription -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
+      register: clusterresourceoverride-operator_subscription
 
-# - name: "Fail if unable to patch the disableAllDefaultSources: true"
-#   fail:
-#     msg: "Unable to set disableAllDefaultSources to true : {{  output.stderr }}"
-#   when: output.failed
+    - name: Get the name of operator group
+      shell: oc get operatorgroup -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
+      register: clusterresourceoverride-operator_operator_group
 
-# - name: Get pull secret
-#   kubernetes.core.k8s_info:
-#     api_version: v1
-#     kind: Secret
-#     namespace: openshift-config
-#     name: pull-secret
-#   register: pull_secret_result
+    - name: Get the instance of the clusterresourceoverride operator
+      shell: oc get clusterresourceoverride -n clusterresourceoverride-operator -ojsonpath="{.items[].metadata.name}"
+      register: clusterresourceoverride-operator_instance
+      ignore_errors: true
 
-# - name: save pull secret to file
-#   copy:
-#     content: "{{ pull_secret_result.resources[0].data['.dockerconfigjson'] | b64decode }}"
-#     dest: /root/authfile
+    - name: Delete the instance of the clusterresourceoverride operator
+      kubernetes.core.k8s:
+        state: absent
+        api_version: operator.autoscaling.openshift.io/v1
+        kind: ClusterResourceOverride
+        name: "{{ clusterresourceoverride-operator_instance.stdout }}"
+        namespace: clusterresourceoverride-operator
+      when: clusterresourceoverride-operator_instance.stdout|length > 0      
+    # Delete CRO subscription
+    - name: "Delete CRO subscription if exists"
+      kubernetes.core.k8s:
+        kind: Subscription
+        namespace: clusterresourceoverride-operator
+        name: "{{clusterresourceoverride-operator_subscription.stdout}}"
+        api_version: operators.coreos.com/v1alpha1
+        state: absent
+      when: clusterresourceoverride-operator_subscription.stdout|length > 0 
+    # Delete the Operator Group
+    - name: "Delete the Operator Group if exists"
+      kubernetes.core.k8s:
+        api_version: operators.coreos.com/v1
+        kind: OperatorGroup
+        namespace: clusterresourceoverride-operator
+        name: "{{ clusterresourceoverride-operator_operator_group.stdout }}"
+        state: absent
+      when: clusterresourceoverride-operator_operator_group.stdout| length > 0   
+    # Delete CRO CSV
+    - name: "Delete CRO CSV if exists"
+      kubernetes.core.k8s:
+        kind: ClusterServiceVersion
+        namespace: clusterresourceoverride-operator
+        name: "{{ clusterresourceoverride-operator_csv.stdout }}"
+        api_version: operators.coreos.com/v1alpha1
+        state: absent
+      when: clusterresourceoverride-operator_csv.stdout|length > 0
+    # Delete the Namespace
+    # - name: "Delete the Namespace if exists "
+    #   kubernetes.core.k8s:
+    #     api_version: v1
+    #     kind: Namespace
+    #     name: clusterresourceoverride-operator
+    #     state: absent
+    # # Delete Redhat Operator CatalogSource
+    # - name: "Delete Redhat Operator CatalogSource if exists"
+    #   kubernetes.core.k8s:
+    #     api_version: operators.coreos.com/v1alpha1
+    #     kind: CatalogSource
+    #     name: redhat-operators-stage
+    #     namespace: openshift-marketplace
+    #     state: absent
+    # # Delete ImageContentSourcePolicy
+    # - name: "Delete ImageContentSourcePolicy if exists"
+    #   kubernetes.core.k8s:
+    #     api_version: operator.openshift.io/v1alpha1
+    #     kind: ImageContentSourcePolicy
+    #     name: "brew-registry"
+    #     state: absent
 
-# # Podman login
-# - name: Podman Login
-#   shell: |
-#     podman login --authfile /root/authfile --username "{{ cro_podman_username }}"  --password "{{ cro_podman_password }}"
-#   register: output
-#   ignore_errors: yes
+    - name: Check if all the pods has been deleted
+      shell: oc get pods -n clusterresourceoverride-operator --no-headers | wc -l
+      register: clusterresourceoverride_pods
+      until: clusterresourceoverride_pods.stdout|int == 0
+      retries: 15
+      delay: 60
 
-# - name: Fail if podman login failed
-#   fail:
-#     msg: "Podman login failed : {{  output.stderr }}"
-#   when: output.failed
+    - name: Get custom resource definitions
+      shell: oc get crd | awk '{print $1}'| grep clusterresourceoverride
+      register: clusterresourceoverride_crds
+      ignore_errors: true
 
-# - name: Set data/pullsecret
-#   shell: |
-#     oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/root/authfile
-#   register: output
-#   ignore_errors: yes
+    - name: Delete the custom resource definition if exists
+      shell: oc delete crd {{ item }}
+      loop: "{{ clusterresourceoverride_crds.stdout_lines }}"
+      when: clusterresourceoverride_crds.stdout_lines|length > 0
 
-# - name: Fail if Set data/pullsecret failed
-#   fail:
-#     msg: "Set data/pullsecret failed : {{  output.stderr }}"
-#   when: output.failed
+    - name: Delete the Kubernetes clusterresourceoverride Operator if exists
+      kubernetes.core.k8s:
+        state: absent
+        kind: Operator
+        name: clusterresourceoverride.clusterresourceoverride-operator
 
-- block:
+    - name: Delete the namespace if exists
+      kubernetes.core.k8s:
+        state: absent
+        kind: Namespace
+        name: clusterresourceoverride-operator
+
+    - name: Check if the namespace gets deleted
+      shell: oc get namespace --no-headers | grep clusterresourceoverride | wc -l
+      register: clusterresourceoverride_namespace
+      until: clusterresourceoverride_namespace.stdout|int == 0
+      retries: 15
+      delay: 30
+
+    - name: Delete the workspace
+      file:
+        path: "{{ clusterresourceoverride_directory }}"
+        state: "absent"
+        mode: '0755'      
+  rescue:
+    - name: "Failure"
+      fail:
+        msg: "failed to delete the resources"
+  when: cro_cleanup
+
+- name: Deploy Kubernetes ClusterResourceOverride Operator
+  block:
+    - name: Include the global-secret-update role
+      include_role:
+          name: global-secret-update
+
+    - name: Set fact variable for catalog source name
+      set_fact:
+        cro_catalogsource: "cro-custom-catalogsource"
+
     - name: Create ImageContentSourcePolicy and CatalogSource
       include_role:
         name: set-custom-catalogsource
@@ -146,81 +227,23 @@
                 cpuRequestToLimitPercent: 25
                 limitCPUToMemoryPercent: 200
         state: present
-    - name: Download And extracting go
-      unarchive:
-        src: "{{ cro_golang_tarball }}"
-        dest: /usr/local
-        remote_src: yes
-        creates: /usr/local/go
+    - name: Include role for installation of Go lang
+      include_role:
+        name: golang-installation
+      vars:
+        go_tarball: "{{ cro_golang_tarball }}"
+        golang_path: "/usr/local"
 
     - name: Clone cluster-resource-override-admission-operator repository
       git:
         repo: "{{ cro_git_repo }}"
         dest: "/root/cluster-resource-override-admission-operator"
+        version: "{{ cro_git_branch }}"
 
     - name: Build cluster resource override admission operator
       shell: |
-          set -e
-          export GOPATH=/usr/local/go
-          export PATH=$PATH:$GOPATH/bin
-          cd /root/cluster-resource-override-admission-operator
-          make e2e OPERATOR_NAMESPACE=clusterresourceoverride-operator KUBECONFIG=/root/openstack-upi/auth/kubeconfig 2>&1 | tee /root/cro_e2e_output.txt
+          make e2e > {{ cro_directory }}/cro_e2e_output.txt
       args:
         chdir: /root/cluster-resource-override-admission-operator
+      environment: "{{ cro_e2e_env }}"  
   when: cro_e2e or cro_enabled
-- block:
-    # Delete CRO subscription
-    - name: "Delete CRO subscription"
-      kubernetes.core.k8s:
-        kind: Subscription
-        namespace: clusterresourceoverride-operator
-        name: clusterresourceoverride
-        api_version: operators.coreos.com/v1alpha1
-        state: absent
-    # Delete CRO CSV
-    - name: Get the name of cluster service version
-      shell: oc get clusterserviceversion -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
-      register: cro_csv
-    - name: "Delete CRO CSV"
-      kubernetes.core.k8s:
-        kind: ClusterServiceVersion
-        namespace: clusterresourceoverride-operator
-        name: "{{ cro_csv.stdout }}"
-        api_version: operators.coreos.com/v1alpha1
-        state: absent
-      when: cro_csv.stdout|length > 0
-    # Delete the Operator Group
-    - name: "Delete the Operator Group"
-      kubernetes.core.k8s:
-        api_version: operators.coreos.com/v1
-        kind: OperatorGroup
-        namespace: clusterresourceoverride-operator
-        name: clusterresourceoverride-operator
-        state: absent
-    # Delete the Namespace
-    - name: "Delete the Namespace"
-      kubernetes.core.k8s:
-        api_version: v1
-        kind: Namespace
-        name: clusterresourceoverride-operator
-        state: absent
-    # Delete Redhat Operator CatalogSource
-    - name: "Delete Redhat Operator CatalogSource"
-      kubernetes.core.k8s:
-        api_version: operators.coreos.com/v1alpha1
-        kind: CatalogSource
-        name: redhat-operators-stage
-        namespace: openshift-marketplace
-        state: absent
-    # Delete ImageContentSourcePolicy
-    - name: "Delete ImageContentSourcePolicy"
-      kubernetes.core.k8s:
-        api_version: operator.openshift.io/v1alpha1
-        kind: ImageContentSourcePolicy
-        name: "brew-registry"
-        state: absent
-  rescue:
-    - name: "Failure"
-      fail:
-        msg: "failed to delete the resources"
-  when: cro_cleanup
