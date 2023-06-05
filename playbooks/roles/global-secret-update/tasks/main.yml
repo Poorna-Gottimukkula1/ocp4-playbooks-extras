@@ -73,7 +73,7 @@
 # Podman login
 - name: Podman Login
   shell: |
-    podman login --authfile /root/authfile
+    podman login --authfile /root/authfile --username {{ podman_username.stdout | quote }}  --password {{ podman_password.stdout | quote}} {{ podman_registry.stdout }}
   register: output
   ignore_errors: yes
 
