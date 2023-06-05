@@ -237,13 +237,13 @@
     - name: Clone cluster-resource-override-admission-operator repository
       git:
         repo: "{{ cro_git_repo }}"
-        dest: "/root/cluster-resource-override-admission-operator"
+        dest: "{{ cro_directory }}/cluster-resource-override-admission-operator"
         version: "{{ cro_git_branch }}"
 
     - name: Build cluster resource override admission operator
       shell: |
           make e2e > {{ cro_directory }}/cro_e2e_output.txt
       args:
-        chdir: /root/cluster-resource-override-admission-operator
+        chdir: "{{ cro_directory }}/cluster-resource-override-admission-operator"
       environment: "{{ cro_e2e_env }}"  
   when: cro_e2e or cro_enabled
