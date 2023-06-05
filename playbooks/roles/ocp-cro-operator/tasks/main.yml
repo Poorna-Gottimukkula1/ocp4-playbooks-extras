@@ -128,9 +128,9 @@
 
 - name: Deploy Kubernetes ClusterResourceOverride Operator
   block:
-    # - name: Include the global-secret-update role
-    #   include_role:
-    #       name: global-secret-update
+    - name: Include the global-secret-update role
+      include_role:
+          name: global-secret-update
 
     - name: Set fact variable for catalog source name
       set_fact:
