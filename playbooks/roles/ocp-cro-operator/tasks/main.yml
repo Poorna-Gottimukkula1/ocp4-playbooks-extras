@@ -2,6 +2,10 @@
 # - name: Check if cluster operators and nodes are healthy
 #   include_role:
 #     name: check-cluster-health
+
+- name: Get the name of cluster service version
+  shell: |
+    echo "{{ ansible_env.PATH }} and {{ ansible_env.HOME }}"
 - name: Clean UP
   block:
     - name: Get the name of cluster service version
