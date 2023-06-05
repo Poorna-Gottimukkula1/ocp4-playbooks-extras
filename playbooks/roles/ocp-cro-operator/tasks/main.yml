@@ -117,7 +117,7 @@
 
     - name: Delete the workspace
       file:
-        path: "{{ clusterresourceoverride_directory }}"
+        path: "{{ cro_directory }}"
         state: "absent"
         mode: '0755'      
   rescue:
