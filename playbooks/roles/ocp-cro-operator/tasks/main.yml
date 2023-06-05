@@ -1,7 +1,7 @@
 ---
-- name: Check if cluster operators and nodes are healthy
-  include_role:
-    name: check-cluster-health
+# - name: Check if cluster operators and nodes are healthy
+#   include_role:
+#     name: check-cluster-health
 - name: Clean UP
   block:
     - name: Get the name of cluster service version
@@ -128,9 +128,9 @@
 
 - name: Deploy Kubernetes ClusterResourceOverride Operator
   block:
-    - name: Include the global-secret-update role
-      include_role:
-          name: global-secret-update
+    # - name: Include the global-secret-update role
+    #   include_role:
+    #       name: global-secret-update
 
     - name: Set fact variable for catalog source name
       set_fact:
