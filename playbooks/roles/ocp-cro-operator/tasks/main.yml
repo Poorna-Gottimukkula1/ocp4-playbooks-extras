@@ -6,19 +6,19 @@
   block:
     - name: Get the name of cluster service version
       shell: oc get clusterserviceversion -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
-      register: clusterresourceoverride-operator_csv
+      register: clusterresourceoverride_csv
 
     - name: Get the name of subscription
       shell: oc get subscription -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
-      register: clusterresourceoverride-operator_subscription
+      register: clusterresourceoverride_subscription
 
     - name: Get the name of operator group
       shell: oc get operatorgroup -n clusterresourceoverride-operator | awk '{ if ($1 ~ /clusterresourceoverride/) print $1 }'
-      register: clusterresourceoverride-operator_operator_group
+      register: clusterresourceoverride_operator_group
 
     - name: Get the instance of the clusterresourceoverride operator
       shell: oc get clusterresourceoverride -n clusterresourceoverride-operator -ojsonpath="{.items[].metadata.name}"
-      register: clusterresourceoverride-operator_instance
+      register: clusterresourceoverride_instance
       ignore_errors: true
 
     - name: Delete the instance of the clusterresourceoverride operator
@@ -26,36 +26,36 @@
         state: absent
         api_version: operator.autoscaling.openshift.io/v1
         kind: ClusterResourceOverride
-        name: "{{ clusterresourceoverride-operator_instance.stdout }}"
+        name: "{{ clusterresourceoverride_instance.stdout }}"
         namespace: clusterresourceoverride-operator
-      when: clusterresourceoverride-operator_instance.stdout|length > 0      
+      when: clusterresourceoverride_instance.stdout|length > 0      
     # Delete CRO subscription
     - name: "Delete CRO subscription if exists"
       kubernetes.core.k8s:
         kind: Subscription
         namespace: clusterresourceoverride-operator
-        name: "{{clusterresourceoverride-operator_subscription.stdout}}"
+        name: "{{clusterresourceoverride_subscription.stdout}}"
         api_version: operators.coreos.com/v1alpha1
         state: absent
-      when: clusterresourceoverride-operator_subscription.stdout|length > 0 
+      when: clusterresourceoverride_subscription.stdout|length > 0 
     # Delete the Operator Group
     - name: "Delete the Operator Group if exists"
       kubernetes.core.k8s:
         api_version: operators.coreos.com/v1
         kind: OperatorGroup
         namespace: clusterresourceoverride-operator
-        name: "{{ clusterresourceoverride-operator_operator_group.stdout }}"
+        name: "{{ clusterresourceoverride_operator_group.stdout }}"
         state: absent
-      when: clusterresourceoverride-operator_operator_group.stdout| length > 0   
+      when: clusterresourceoverride_operator_group.stdout| length > 0   
     # Delete CRO CSV
     - name: "Delete CRO CSV if exists"
       kubernetes.core.k8s:
         kind: ClusterServiceVersion
         namespace: clusterresourceoverride-operator
-        name: "{{ clusterresourceoverride-operator_csv.stdout }}"
+        name: "{{ clusterresourceoverride_csv.stdout }}"
         api_version: operators.coreos.com/v1alpha1
         state: absent
-      when: clusterresourceoverride-operator_csv.stdout|length > 0
+      when: clusterresourceoverride_csv.stdout|length > 0
     # Delete the Namespace
     # - name: "Delete the Namespace if exists "
     #   kubernetes.core.k8s:
