@@ -1,5 +1,7 @@
 ---
-- name: Run cro operator e2e test cases
+- name: Installation of the CRo Operator and run e2e
   hosts: bastion
-  roles:
-  - ocp-cro-operator
+  tasks:
+  - name: Deploy CRO Operator
+    include_role:
+      name: ocp-cro-operator

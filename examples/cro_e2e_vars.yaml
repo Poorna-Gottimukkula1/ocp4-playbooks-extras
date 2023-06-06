@@ -10,6 +10,6 @@ cro_upgrade_channel: "stable"
 cro_directory: "/tmp/cro"
 cro_golang_tarball: "https://go.dev/dl/go1.20.linux-ppc64le.tar.gz"
 cro_e2e: true
-cro_git_repo: "https://github.com/openshift/cluster-resource-override-admission-operator.git"
+cro_e2e_git_repository: "https://github.com/openshift/cluster-resource-override-admission-operator.git"
 cro_git_branch: "master"
 cro_cleanup: true
