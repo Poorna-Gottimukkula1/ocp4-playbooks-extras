@@ -37,10 +37,10 @@
 
 - import_playbook: golang-installation.yml
   when: golang_installation
-  
+
 - import_playbook: ocp-service-binding-operator.yml
-  when: ocp_sbo 
-  
+  when: ocp_sbo
+
 - import_playbook: ocp-htpasswd-identity-provider.yml
   when: htpasswd_identity_provider
 
@@ -71,7 +71,7 @@
 
 - import_playbook: hypershift.yml
   when: >
-        (hypershift_install is defined and hypershift_install) or 
+        (hypershift_install is defined and hypershift_install) or
         (hypershift_destroy is defined and hypershift_destroy)
 
 - import_playbook: ocp-fio.yaml
@@ -94,7 +94,7 @@
 
 - import_playbook: ocp-sctp.yml
   when: sctp_enabled is defined and sctp_enabled
-  
+
 - import_playbook: ocp-pod-disruption-budget.yml
   when: pdb_enabled is defined and pdb_enabled
 

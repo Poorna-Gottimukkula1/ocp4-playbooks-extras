@@ -1,11 +1,8 @@
 ---
-# - name: Check if cluster operators and nodes are healthy
-#   include_role:
-#     name: check-cluster-health
+- name: Check if cluster operators and nodes are healthy
+  include_role:
+    name: check-cluster-health
 
-- name: Get the name of cluster service version
-  shell: |
-    echo "{{ ansible_env.PATH }} and {{ ansible_env.HOME }}"
 - name: Clean UP
   block:
     - name: Get the name of cluster service version
@@ -32,7 +29,7 @@
         kind: ClusterResourceOverride
         name: "{{ clusterresourceoverride_instance.stdout }}"
         namespace: clusterresourceoverride-operator
-      when: clusterresourceoverride_instance.stdout|length > 0      
+      when: clusterresourceoverride_instance.stdout|length > 0
     # Delete CRO subscription
     - name: "Delete CRO subscription if exists"
       kubernetes.core.k8s:
@@ -41,7 +38,7 @@
         name: "{{clusterresourceoverride_subscription.stdout}}"
         api_version: operators.coreos.com/v1alpha1
         state: absent
-      when: clusterresourceoverride_subscription.stdout|length > 0 
+      when: clusterresourceoverride_subscription.stdout|length > 0
     # Delete the Operator Group
     - name: "Delete the Operator Group if exists"
       kubernetes.core.k8s:
@@ -50,7 +47,7 @@
         namespace: clusterresourceoverride-operator
         name: "{{ clusterresourceoverride_operator_group.stdout }}"
         state: absent
-      when: clusterresourceoverride_operator_group.stdout| length > 0   
+      when: clusterresourceoverride_operator_group.stdout| length > 0
     # Delete CRO CSV
     - name: "Delete CRO CSV if exists"
       kubernetes.core.k8s:
@@ -123,7 +120,7 @@
       file:
         path: "{{ cro_directory }}"
         state: "absent"
-        mode: '0755'      
+        mode: '0755'
   rescue:
     - name: "Failure"
       fail:
@@ -135,7 +132,7 @@
     - name: Include the global-secret-update role
       include_role:
         name: global-secret-update
-      when: cro_enable_global_secret  
+      when: cro_enable_global_secret
 
     - name: Set fact variable for catalog source name
       set_fact:
@@ -250,5 +247,5 @@
           make e2e > {{ cro_directory }}/cro_e2e_output.txt
       args:
         chdir: "{{ cro_directory }}/cluster-resource-override-admission-operator"
-      environment: "{{ cro_e2e_env }}"  
+      environment: "{{ cro_e2e_env }}"
   when: cro_e2e or cro_enabled

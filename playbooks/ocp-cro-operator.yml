@@ -1,5 +1,5 @@
 ---
-- name: Installation of the CRo Operator and run e2e
+- name: Installation of the CRO Operator and run e2e
   hosts: bastion
   tasks:
   - name: Deploy CRO Operator
