@@ -134,7 +134,8 @@
   block:
     - name: Include the global-secret-update role
       include_role:
-          name: global-secret-update
+        name: global-secret-update
+      when: cro_enable_global_secret  
 
     - name: Set fact variable for catalog source name
       set_fact:

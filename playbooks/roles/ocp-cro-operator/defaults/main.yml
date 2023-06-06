@@ -2,6 +2,7 @@
 # defaults file for playbooks/roles/ocp-cro-operator
 cro_enabled: false
 cro_install_operator: true
+cro_enable_global_secret: true
 ocp_version: "4.13"
 cro_catalogsource_image: "quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-{{ ocp_version }}"
 cro_catalogsource: "redhat-operators"
