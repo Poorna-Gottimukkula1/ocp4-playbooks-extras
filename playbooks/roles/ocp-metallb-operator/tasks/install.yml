@@ -55,7 +55,6 @@
     environment: "{{ metallb_e2e_env }}"
     args:
       chdir: "{{ metallb_directory }}/openshift-tests-private"
-    environment: "{{ metallb_e2e_env }}"  
 
   - name: Check if the binary is created
     shell: ls -hl {{ metallb_directory }}/openshift-tests-private/bin/extended-platform-tests | wc -l
