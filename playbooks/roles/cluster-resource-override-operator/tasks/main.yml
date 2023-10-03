@@ -173,6 +173,12 @@
         target: e2e
       register: e2e_output
 
+    - name: Compile the go modules using make command
+      shell: make e2e > {{ cro_workdir }}/e2e-test-result/cro-e2e-test-summary.txt
+      args:  
+        chdir: "{{ cro_workdir }}/{{ cro_e2e_dir }}"
+      register: e2e_output 
+
     - debug:
         msg: "{{ e2e_output.stdout_lines }}"
 
