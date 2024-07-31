@@ -1,6 +1,7 @@
 ---
 # defaults file for playbooks/roles/ocp-compliance
 compliance_enabled: false
+compliance_enable_global_secret: false
 compliance_catalogsource: "redhat-operators"
 compliance_directory: "/tmp/compliance"
 compliance_catalogsource_image: ""
