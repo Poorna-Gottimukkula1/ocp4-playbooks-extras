@@ -148,7 +148,7 @@
     oc get secret/pull-secret -n openshift-config -o json | jq -r '.data.".dockerconfigjson"' | base64 -d > authfile
     mkdir -p /run/user/0/containers/
     cp authfile /run/user/0/containers/auth.json
-  when: e2e_tests_git_branch == 'release-4.16'  
+  when: e2e_tests_git_branch == 'release-4.18'  
 
 # Running E2E
 - name: Prepare test suites and run e2e tests
